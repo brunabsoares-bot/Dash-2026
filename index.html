@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Executive Dashboard — Sellers 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--g:#00A650;--r:#E63946;--y:#F5A800;--b:#3483FA;--gr:#9E9E9E;--nv:#0D1B2A;--bg:#F0F2F5;--bd:#E4E7EB;--wh:#fff;}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--nv);font-size:13px;}
+
+/* HEADER */
+header{background:var(--nv);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+.htitle{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.hbadge{background:var(--y);color:var(--nv);font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.8px;margin-right:10px;}
+.hdate{font-size:11px;color:rgba(255,255,255,.35);text-align:right;}
+.hdate strong{display:block;font-size:16px;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:-.5px;}
+
+/* TAB NAV */
+.tab-nav{background:var(--nv);border-top:1px solid rgba(255,255,255,.07);padding:0 32px;display:flex;}
+.tnb{background:none;border:none;color:rgba(255,255,255,.4);font-family:inherit;font-size:12px;font-weight:600;padding:10px 18px;cursor:pointer;border-bottom:3px solid transparent;transition:all .18s;}
+.tnb.on{color:#fff;border-bottom-color:var(--y);}
+
+/* FILTER BAR */
+.fbar{background:#fff;border-bottom:1px solid var(--bd);padding:9px 32px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.fl{font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;}
+
+/* DATE SELECTOR */
+.date-sel{position:relative;}
+.date-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1.5px solid var(--bd);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;color:var(--nv);white-space:nowrap;}
+.date-btn:hover{border-color:#aaa;}
+.date-btn .preset-lbl{font-size:11px;font-weight:700;color:var(--b);}
+.date-btn .range-lbl{font-size:10px;color:var(--gr);font-weight:500;}
+.date-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:300;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);width:460px;padding:16px;}
+.date-panel.open{display:block;}
+.dp-title{font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.preset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+.preset-opt{padding:6px 10px;border-radius:7px;border:1.5px solid var(--bd);background:#fff;font-size:11px;font-weight:600;color:#555;cursor:pointer;text-align:center;transition:all .15s;}
+.preset-opt:hover{border-color:#aaa;}
+.preset-opt.on{border-color:var(--b);background:var(--b);color:#fff;}
+.dp-divider{height:1px;background:var(--bd);margin:12px 0;}
+.custom-range{display:flex;align-items:center;gap:8px;}
+.custom-range input[type=date]{padding:6px 10px;border:1.5px solid var(--bd);border-radius:7px;font-family:inherit;font-size:11px;font-weight:600;color:var(--nv);background:#fff;}
+.dp-apply{padding:7px 18px;background:var(--nv);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;margin-left:auto;}
+
+/* SELLER CHIPS */
+.schip{padding:4px 10px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;font-size:11px;font-weight:600;color:#666;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.schip.on{border-color:var(--nv);background:var(--nv);color:#fff;}
+.fbar-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--bd);background:#fff;font-size:11px;font-weight:600;color:#555;cursor:pointer;}
+.fbar-btn.pri{background:var(--nv);color:#fff;border-color:var(--nv);}
+
+/* SECTION NAV */
+.snav{background:#fff;border-bottom:1px solid var(--bd);padding:0 32px;display:flex;overflow-x:auto;}
+.snb{padding:9px 15px;font-size:11px;font-weight:600;color:var(--gr);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .18s;}
+.snb:hover,.snb.on{color:var(--nv);border-bottom-color:var(--b);}
+
+/* PAGE */
+.page{max-width:1380px;margin:0 auto;padding:18px 28px 40px;}
+.tab-content{display:none;}
+.tab-content.on{display:block;}
+.section{margin-bottom:22px;}
+.sec-hd{margin-bottom:12px;}
+.sec-title{font-size:14px;font-weight:800;color:var(--nv);letter-spacing:-.2px;}
+.sec-sub{font-size:11px;color:var(--gr);margin-top:2px;}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.card-title{font-size:13px;font-weight:700;color:var(--nv);margin-bottom:3px;}
+.card-sub{font-size:11px;color:var(--gr);margin-bottom:10px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+
+/* KPI */
+.kpi{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.06);position:relative;}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+.kpi.g::after{background:var(--g);}
+.kpi.r::after{background:var(--r);}
+.kpi.y::after{background:var(--y);}
+.kpi.b::after{background:var(--b);}
+.kpi-lbl{font-size:9px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+.kpi-val{font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--nv);}
+.kpi-deltas{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.d{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;}
+.d.up{background:rgba(0,166,80,.1);color:var(--g);}
+.d.dn{background:rgba(230,57,70,.1);color:var(--r);}
+.d.fl{background:#F4F5F7;color:var(--gr);}
+
+/* INSIGHTS */
+.ins-bar{background:rgba(52,131,250,.05);border:1px solid rgba(52,131,250,.18);border-radius:10px;padding:11px 16px;margin-bottom:18px;}
+.ins-title{font-size:10px;font-weight:700;color:var(--b);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+.ins-list{display:flex;flex-wrap:wrap;gap:7px;}
+.ins{font-size:11px;font-weight:500;padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:#fff;}
+.ins.r{border-color:rgba(230,57,70,.3);background:rgba(230,57,70,.04);}
+.ins.g{border-color:rgba(0,166,80,.3);background:rgba(0,166,80,.04);}
+.ins.y{border-color:rgba(245,168,0,.3);background:rgba(245,168,0,.04);}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--bd);background:#FAFAFA;white-space:nowrap;}
+.tbl td{padding:8px 10px;border-bottom:1px solid #F5F5F5;vertical-align:middle;}
+.tbl tr:hover td{background:#FAFBFC;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.bg{background:rgba(0,166,80,.1);color:var(--g);}
+.br{background:rgba(230,57,70,.1);color:var(--r);}
+.by{background:rgba(245,168,0,.12);color:#B07400;}
+.bb{background:rgba(52,131,250,.1);color:var(--b);}
+.bpc-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.item-link{color:var(--b);text-decoration:none;font-weight:600;}
+.item-link:hover{text-decoration:underline;}
+
+/* SUBTABS */
+.stabs{display:flex;gap:0;border-bottom:2px solid var(--bd);margin-bottom:14px;}
+.stb{padding:8px 15px;font-size:12px;font-weight:600;color:var(--gr);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .18s;}
+.stb.on{color:var(--nv);border-bottom-color:var(--nv);}
+
+/* RANK BARS */
+.rrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.rnm{font-size:11px;font-weight:600;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rtrack{flex:1;background:#F4F5F7;border-radius:4px;height:20px;overflow:hidden;}
+.rfill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;}
+.rfill span{font-size:10px;font-weight:700;color:#fff;}
+.rdelta{font-size:10px;font-weight:700;min-width:42px;text-align:right;}
+.rd-up{color:var(--g);}.rd-dn{color:var(--r);}.rd-fl{color:var(--gr);}
+
+/* ALERTS */
+.alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.abox{border-radius:10px;padding:14px 16px;}
+.abox.opp{background:rgba(0,166,80,.04);border:1px solid rgba(0,166,80,.2);}
+.abox.risk{background:rgba(230,57,70,.04);border:1px solid rgba(230,57,70,.18);}
+.abox-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.abox.opp .abox-title{color:var(--g);}
+.abox.risk .abox-title{color:var(--r);}
+.aitem{display:flex;align-items:flex-start;gap:7px;margin-bottom:8px;font-size:12px;line-height:1.4;}
+.adot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+
+/* RECS */
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rec{background:#fff;border-radius:10px;padding:14px 16px;border-left:4px solid var(--b);box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.rec-type{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--gr);letter-spacing:.5px;margin-bottom:3px;}
+.rec-txt{font-size:12px;font-weight:600;color:var(--nv);line-height:1.4;}
+.rec-act{font-size:11px;color:var(--b);margin-top:4px;font-weight:500;}
+
+.spill{padding:4px 12px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;font-size:11px;font-weight:600;color:#666;cursor:pointer;transition:all .15s;}
+.spill.on{border-color:var(--nv);background:var(--nv);color:#fff;}
+/* Section insights strip */
+.sec-ins{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;}
+.sic{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.sic.opp{border-top:3px solid var(--g);}
+.sic.risk{border-top:3px solid var(--r);}
+.sic.rec{border-top:3px solid var(--b);}
+.sic-t{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.sic.opp .sic-t{color:var(--g);}
+.sic.risk .sic-t{color:var(--r);}
+.sic.rec .sic-t{color:var(--b);}
+.sic-item{font-size:11px;margin-bottom:5px;line-height:1.4;color:#333;}
+/* Reputation cards */
+.rep-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.rep-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid #ccc;}
+.rep-card.rep-alert{border-left-color:var(--r);}
+.rep-nm{font-size:12px;font-weight:700;color:var(--nv);margin-bottom:6px;}
+.rep-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;margin-bottom:8px;}
+.rep-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.rep-lbl{font-size:10px;color:var(--gr);}
+.rep-val{font-size:12px;font-weight:700;}
+.rep-thr{margin-top:6px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;}
+/* CLIPS coverage bar */
+.cov-bar-wrap{background:#F0F2F5;border-radius:4px;height:8px;overflow:hidden;margin-top:3px;}
+.cov-bar-vip{height:100%;float:left;background:var(--b);}
+.cov-bar-pdp{height:100%;float:left;background:var(--b);opacity:.45;}
+canvas{display:block;width:100%!important;}
+footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center">
+    <span class="hbadge">2026</span>
+    <span class="htitle">Dashboard Executivo — Sellers BPC &amp; GMV</span>
+  </div>
+  <div class="hdate">Atualizado<strong>16 Abr 2026</strong></div>
+</header>
+
+<div class="tab-nav">
+  <button class="tnb on" onclick="switchTab('t1')">📦 Análise de Carteira</button>
+  <button class="tnb" onclick="switchTab('t2')">🎯 Análise de BPC</button>
+  <button class="tnb" onclick="switchTab('t3')">🌐 Ecossistema</button>
+</div>
+
+<!-- ═══ FILTER BAR (shared) ═══ -->
+<div class="fbar" id="fbar">
+  <span class="fl">Período</span>
+  <div class="date-sel">
+    <button class="date-btn" onclick="toggleDP()">
+      <div>
+        <div class="preset-lbl" id="dpLabel">YTD</div>
+        <div class="range-lbl" id="dpRange">1 Jan – 16 Abr 2026</div>
+      </div>
+      <span style="color:#aaa;font-size:10px">▼</span>
+    </button>
+    <div class="date-panel" id="datePanel">
+      <div class="dp-title">Período pré-definido</div>
+      <div class="preset-grid" id="presetGrid"></div>
+      <div class="dp-divider"></div>
+      <div class="dp-title">Personalizado</div>
+      <div class="custom-range">
+        <input type="date" id="dtStart" value="2026-01-01">
+        <span style="color:#aaa;font-size:12px">até</span>
+        <input type="date" id="dtEnd" value="2026-04-16">
+        <button class="dp-apply" onclick="applyCustomDate()">Aplicar</button>
+      </div>
+    </div>
+  </div>
+  <span class="fl" style="margin-left:4px">Sellers</span>
+  <div id="sChips" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+  <button class="fbar-btn" onclick="selAll()">Todos</button>
+  <button class="fbar-btn" onclick="clrSel()">Limpar</button>
+  <button class="fbar-btn pri" onclick="applyAll()">▶ Aplicar</button>
+</div>
+
+<!-- ═══════════════ TAB 1 ═══════════════ -->
+<div id="tab-t1" class="tab-content on">
+  <div class="snav">
+    <div class="snb on" onclick="gotoSec('s-kpi')">KPIs</div>
+    <div class="snb" onclick="gotoSec('s-vendas')">Vendas</div>
+    <div class="snb" onclick="gotoSec('s-reputacao')">Reputação</div>
+    <div class="snb" onclick="gotoSec('s-sellers')">Sellers</div>
+    <div class="snb" onclick="gotoSec('s-clips')">CLIPs</div>
+    <div class="snb" onclick="gotoSec('s-logistica')">Logística</div>
+    <div class="snb" onclick="gotoSec('s-pagamento')">Pagamentos</div>
+    <div class="snb" onclick="gotoSec('s-itens')">Itens</div>
+    <div class="snb" onclick="gotoSec('s-alertas')">Alertas</div>
+    <div class="snb" onclick="gotoSec('s-rec')">Recomendações</div>
+  </div>
+  <div class="page">
+    <div class="ins-bar"><div class="ins-title">💡 Insights</div><div class="ins-list" id="insList"></div></div>
+    <div class="g3 section" id="s-kpi" style="margin-bottom:22px">
+      <div class="kpi b"><div class="kpi-lbl">GMV</div><div class="kpi-val" id="kv0">—</div><div class="kpi-deltas" id="kd0"></div></div>
+      <div class="kpi b"><div class="kpi-lbl">Orders</div><div class="kpi-val" id="kv1">—</div><div class="kpi-deltas" id="kd1"></div></div>
+      <div class="kpi b"><div class="kpi-lbl">Ticket Médio</div><div class="kpi-val" id="kv2">—</div><div class="kpi-deltas" id="kd2"></div></div>
+    </div>
+    <div class="section" id="s-vendas">
+      <div class="sec-hd"><div class="sec-title">Performance de Vendas</div><div class="sec-sub">GMV e Orders por seller no período</div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">GMV Mensal (R$)</div><div class="card-sub">▲/▼ MoM = vs mês anterior · YoY = vs mesmo mês 2025 · <span style="color:var(--b);font-weight:700">Abr MTD</span> em destaque</div><div style="height:270px"><canvas id="cGmvBar"></canvas></div></div>
+        <div class="card"><div class="card-title">Orders Mensais</div><div class="card-sub">▲/▼ MoM = vs mês anterior · YoY = vs mesmo mês 2025 · <span style="color:var(--b);font-weight:700">Abr MTD</span> em destaque</div><div style="height:270px"><canvas id="cGmvMom"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-vendas"></div>
+    </div>
+
+    <div class="section" id="s-reputacao">
+      <div class="sec-hd">
+        <div class="sec-title">Reputação dos Sellers</div>
+        <div class="sec-sub">Fonte: DM_MARKETPLACE_COMMERCE_SELLERS · % cancelamentos como indicador de risco · Thresholds: &gt;1% risco ML · &gt;2% amarelo · &gt;5% laranja · &gt;10% vermelho</div>
+      </div>
+      <div class="rep-grid" id="repGrid"></div>
+      <div class="sec-ins" id="si-reputacao"></div>
+    </div>
+
+    <div class="section" id="s-sellers">
+      <div class="sec-hd"><div class="sec-title">Análise Consolidada de Sellers</div></div>
+      <div class="card" style="overflow-x:auto"><table class="tbl" id="tblSellers"></table></div>
+      <div class="sec-ins" id="si-sellers"></div>
+    </div>
+    <div class="section" id="s-clips">
+      <div class="sec-hd">
+        <div class="sec-title">Cobertura de CLIPs — VIP &amp; PDP</div>
+        <div class="sec-sub">Fonte: LK_COBERTURA_GMV_CLIPS_VIP_PDP_NV · % Cobertura = GMV CLIPs / GMV total seller · Azul escuro = VIP · Azul claro = PDP</div>
+      </div>
+      <div class="g2">
+        <div class="card" style="overflow-x:auto"><table class="tbl" id="tblClips"></table></div>
+        <div class="card"><div class="card-title">Cobertura % por Seller</div><div style="height:280px"><canvas id="cClips"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-clips"></div>
+    </div>
+
+    <div class="section" id="s-logistica">
+      <div class="sec-hd"><div class="sec-title">Mix Logístico</div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Distribuição da Carteira</div><div style="height:210px"><canvas id="cLogD"></canvas></div></div>
+        <div class="card"><div class="card-title">Mix por Seller (top 6)</div><div style="height:210px"><canvas id="cLogS"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-logistica"></div>
+    </div>
+    <div class="section" id="s-pagamento">
+      <div class="sec-hd"><div class="sec-title">Mix de Meio de Pagamento</div><div class="sec-sub">Fonte: DM_EFICIENCIA_MLB · YTD 2026 · filtrado por sellers selecionados</div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Portfolio — Distribuição Total (YTD)</div><div style="height:250px"><canvas id="cPayTotal"></canvas></div></div>
+        <div class="card"><div class="card-title">Mix por Seller — % de GMV</div><div style="height:250px"><canvas id="cPaySeller"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-pagamento"></div>
+    </div>
+
+    <div class="section" id="s-itens">
+      <div class="sec-hd"><div class="sec-title">Análise de Itens</div></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px">Ordenar por:</span>
+          <div id="sortPills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div class="stabs">
+          <div class="stb on" onclick="showItTab('top',this)">🏆 Top Itens</div>
+          <div class="stb" onclick="showItTab('queda',this)">📉 Em Queda</div>
+          <div class="stb" onclick="showItTab('preco',this)">💰 Aumento de Preço</div>
+          <div class="stb" onclick="showItTab('vc',this)">⚠ VC Negativa</div>
+        </div>
+        <div style="overflow-x:auto" id="it-top"><table class="tbl" id="tTop"></table></div>
+        <div style="overflow-x:auto;display:none" id="it-queda"><table class="tbl" id="tQueda"></table></div>
+        <div style="overflow-x:auto;display:none" id="it-preco"><table class="tbl" id="tPreco"></table></div>
+        <div style="overflow-x:auto;display:none" id="it-vc"><table class="tbl" id="tVc"></table></div>
+      </div>
+      <div class="sec-ins" id="si-itens" style="margin-top:12px"></div>
+    </div>
+    <div class="section" id="s-alertas">
+      <div class="sec-hd"><div class="sec-title">Oportunidades &amp; Alertas</div></div>
+      <div class="alert-grid">
+        <div class="abox opp"><div class="abox-title">✅ Oportunidades</div><div id="oppList"></div></div>
+        <div class="abox risk"><div class="abox-title">🚨 Alertas</div><div id="alertList"></div></div>
+      </div>
+    </div>
+    <div class="section" id="s-rec">
+      <div class="sec-hd"><div class="sec-title">Recomendações Acionáveis</div></div>
+      <div class="rec-grid" id="recGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 2 ═══════════════ -->
+<div id="tab-t2" class="tab-content">
+  <div class="snav" id="snav2">
+    <div class="snb on" onclick="gotoSec('s2-kpi')">KPIs BPC</div>
+    <div class="snb" onclick="gotoSec('s2-matrix')">Matriz BPC × GMV</div>
+    <div class="snb" onclick="gotoSec('s2-trend')">Evolução BPC</div>
+    <div class="snb" onclick="gotoSec('s2-ranking')">Ranking</div>
+    <div class="snb" onclick="gotoSec('s2-heatmap')">Mapa de Calor</div>
+    <div class="snb" onclick="gotoSec('s2-ofensores')">Itens Ofensores</div>
+  </div>
+  <div class="page">
+
+    <!-- KPIs BPC -->
+    <div class="g3 section" id="s2-kpi" style="margin-bottom:18px">
+      <div class="kpi b"><div class="kpi-lbl">BPC Médio</div><div class="kpi-val" id="t2k0">—</div><div class="kpi-deltas" id="t2kd0"></div></div>
+      <div class="kpi r"><div class="kpi-lbl">% GMV em Risco</div><div class="kpi-val" id="t2k1">—</div><div class="kpi-deltas" id="t2kd1"></div></div>
+      <div class="kpi g"><div class="kpi-lbl">Sellers na Meta (≥80%)</div><div class="kpi-val" id="t2k2">—</div><div class="kpi-deltas" id="t2kd2"></div></div>
+    </div>
+
+    <div class="ins-bar"><div class="ins-title">💡 Insights BPC</div><div class="ins-list" id="insList2"></div></div>
+
+    <!-- Matriz BPC × GMV -->
+    <div class="section" id="s2-matrix">
+      <div class="sec-hd"><div class="sec-title">Posicionamento Estratégico · BPC × GMV</div><div class="sec-sub">Meta BPC 80% · mediana de GMV como limiar · Tamanho da bolha proporcional ao GMV</div></div>
+      <div class="g21">
+        <div class="card"><div class="card-title" id="matTitle">Matriz BPC × GMV — último mês selecionado</div><div style="height:320px"><canvas id="cMatrix"></canvas></div></div>
+        <div class="card" id="quadPanel" style="display:flex;flex-direction:column;justify-content:space-between;"></div>
+      </div>
+    </div>
+
+    <!-- BPC Trend -->
+    <div class="section" id="s2-trend">
+      <div class="sec-hd"><div class="sec-title">Evolução BPC — Todos os Sellers</div><div class="sec-sub">Linha pontilhada = meta 80% · Sellers destacados: Emcompre, Zebrands, Lucas Home, Zidi</div></div>
+      <div class="card"><div style="height:260px"><canvas id="cBpcTrend"></canvas></div></div>
+    </div>
+
+    <!-- BPC Ranking + Delta -->
+    <div class="section" id="s2-ranking">
+      <div class="sec-hd"><div class="sec-title">Ranking BPC — Classificação e Variação</div></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">Ranking BPC — último mês</div>
+          <div class="card-sub">Verde ≥ 80% · Amarelo 70–79% · Vermelho &lt; 70%</div>
+          <div id="bpcRankList" style="margin-top:4px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Variação BPC — vs Mês Anterior</div>
+          <div class="card-sub">Quem melhorou e quem piorou</div>
+          <div style="height:250px"><canvas id="cBpcDelta"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap + GMV Risk -->
+    <div class="section" id="s2-heatmap">
+      <div class="sec-hd"><div class="sec-title">Mapa de Calor &amp; GMV em Risco</div></div>
+      <div class="g21">
+        <div class="card">
+          <div class="card-title">Mapa de Calor — BPC por Seller e Mês</div>
+          <div style="overflow-x:auto;margin-top:10px"><table class="tbl" id="hmTable"></table></div>
+        </div>
+        <div class="card">
+          <div class="card-title">% GMV em Risco por Mês</div>
+          <div class="card-sub">% do GMV com BPC abaixo de 80%</div>
+          <div style="height:220px"><canvas id="cGmvRisk"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itens Ofensores -->
+    <div class="section" id="s2-ofensores">
+      <div class="sec-hd"><div class="sec-title">Itens Ofensores de BPC</div><div class="sec-sub">Itens que mais prejudicam a competitividade — ordenados por BPC crescente</div></div>
+      <div class="card" style="overflow-x:auto"><table class="tbl" id="tBpcOff"></table></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ TAB 3: ECOSSISTEMA ═══════════════ -->
+<div id="tab-t3" class="tab-content">
+  <div class="snav">
+    <div class="snb on"  onclick="gotoSec('se-combo')">Combo</div>
+    <div class="snb" onclick="gotoSec('se-promo')">Promoções</div>
+    <div class="snb" onclick="gotoSec('se-clips2')">CLIPs</div>
+    <div class="snb" onclick="gotoSec('se-pay2')">Pagamentos</div>
+    <div class="snb" onclick="gotoSec('se-itens2')">Itens</div>
+    <div class="snb" onclick="gotoSec('se-trafego')">Tráfego &amp; Ads</div>
+  </div>
+  <div class="page">
+
+    <div class="ins-bar"><div class="ins-title">💡 Insights Ecossistema</div><div class="ins-list" id="insEco"></div></div>
+
+    <!-- COMBO -->
+    <div class="section" id="se-combo">
+      <div class="sec-hd"><div class="sec-title">Combo Premium (PSJ) vs Clássico (PCJ)</div><div class="sec-sub">PSJ = Parcelamento Sem Juros (premium) · PCJ = Com Juros (clássico) · impacto direto no ticket e BPC</div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Mix por Seller — % PSJ vs PCJ</div><div style="height:260px"><canvas id="cComboSeller"></canvas></div></div>
+        <div class="card"><div class="card-title">Evolução PSJ % — mês a mês</div><div style="height:260px"><canvas id="cComboTrend"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-combo"></div>
+    </div>
+
+    <!-- PROMOÇÕES -->
+    <div class="section" id="se-promo">
+      <div class="sec-hd"><div class="sec-title">Promoções &amp; Campanhas</div><div class="sec-sub">Investimento por tipo: DXI (Pré-acordo) · DXB (Bancário) · Relâmpago · Oferta do Dia · Cupons</div></div>
+      <div class="g4" style="margin-bottom:14px" id="promoKpis"></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Investimento do Seller por Tipo (YTD)</div><div style="height:240px"><canvas id="cPromoSeller"></canvas></div></div>
+        <div class="card"><div class="card-title">Evolução do Investimento Total — Seller</div><div style="height:240px"><canvas id="cPromoTrend"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:14px;overflow-x:auto">
+        <div class="card-title">Detalhe por Seller — Investimento vs GMV Promovido</div>
+        <table class="tbl" id="tblPromo" style="margin-top:10px"></table>
+      </div>
+      <div class="sec-ins" id="si-promo"></div>
+    </div>
+
+    <!-- CLIPs (reaproveitado) -->
+    <div class="section" id="se-clips2">
+      <div class="sec-hd"><div class="sec-title">Cobertura de CLIPs — VIP &amp; PDP</div><div class="sec-sub">Fonte: LK_COBERTURA_GMV_CLIPS_VIP_PDP_NV · Solução vinculada e % cobertura</div></div>
+      <div class="g2">
+        <div class="card" style="overflow-x:auto"><table class="tbl" id="tblClips2"></table></div>
+        <div class="card"><div class="card-title">Cobertura % por Seller</div><div style="height:280px"><canvas id="cClips2"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-clips2"></div>
+    </div>
+
+    <!-- PAGAMENTOS (reaproveitado) -->
+    <div class="section" id="se-pay2">
+      <div class="sec-hd"><div class="sec-title">Mix de Meio de Pagamento</div><div class="sec-sub">Fonte: DM_EFICIENCIA_MLB · YTD 2026</div></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">Portfolio — Distribuição Total</div><div style="height:250px"><canvas id="cPayTotal2"></canvas></div></div>
+        <div class="card"><div class="card-title">Mix por Seller — % de GMV</div><div style="height:250px"><canvas id="cPaySeller2"></canvas></div></div>
+      </div>
+      <div class="sec-ins" id="si-pay2"></div>
+    </div>
+
+    <!-- ITENS (reaproveitado) -->
+    <div class="section" id="se-itens2">
+      <div class="sec-hd"><div class="sec-title">Análise de Itens</div><div class="sec-sub">Ranking · queda · preço · VC negativa — com coluna Combo por item</div></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px">Ordenar por:</span>
+          <div id="sortPills2" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div class="stabs">
+          <div class="stb on" onclick="showItTab2('top2',this)">🏆 Top Itens</div>
+          <div class="stb" onclick="showItTab2('queda2',this)">📉 Em Queda</div>
+          <div class="stb" onclick="showItTab2('preco2',this)">💰 Aumento de Preço</div>
+          <div class="stb" onclick="showItTab2('vc2',this)">⚠ VC Negativa</div>
+        </div>
+        <div style="overflow-x:auto" id="it2-top2"><table class="tbl" id="tTop2"></table></div>
+        <div style="overflow-x:auto;display:none" id="it2-queda2"><table class="tbl" id="tQueda2"></table></div>
+        <div style="overflow-x:auto;display:none" id="it2-preco2"><table class="tbl" id="tPreco2"></table></div>
+        <div style="overflow-x:auto;display:none" id="it2-vc2"><table class="tbl" id="tVc2"></table></div>
+      </div>
+    </div>
+
+    <!-- TRÁFEGO & ADS (placeholder estruturado) -->
+    <div class="section" id="se-trafego">
+      <div class="sec-hd"><div class="sec-title">Tráfego, Conversão &amp; Ads</div><div class="sec-sub">Requer conexão com tabelas de visitas/impressões e Mercado Ads</div></div>
+      <div class="g3">
+        <div class="card" style="border:2px dashed var(--bd)">
+          <div class="card-title" style="color:var(--gr)">📊 Funil de Conversão</div>
+          <div class="card-sub">Impressões → Cliques → Visitas → Pedidos</div>
+          <div style="margin-top:12px;font-size:11px;color:#aaa">Fontes necessárias:<br>
+            <code style="background:#F4F5F7;padding:2px 5px;border-radius:4px">DM_ITEM_VISITS</code><br>
+            <code style="background:#F4F5F7;padding:2px 5px;border-radius:4px">DM_ITEM_IMPRESSIONS</code>
+          </div>
+          <div id="funnelPlaceholder" style="margin-top:14px"></div>
+        </div>
+        <div class="card" style="border:2px dashed var(--bd)">
+          <div class="card-title" style="color:var(--gr)">🖱 Cliques por Seller</div>
+          <div class="card-sub">Itens com cliques vs sem cliques · % sortimento</div>
+          <div style="margin-top:12px;font-size:11px;color:#aaa">Fonte necessária:<br>
+            <code style="background:#F4F5F7;padding:2px 5px;border-radius:4px">LK_ITEM_CLICKS</code> ou equivalente
+          </div>
+        </div>
+        <div class="card" style="border:2px dashed var(--bd)">
+          <div class="card-title" style="color:var(--gr)">📢 Ads (Mercado Publicidade)</div>
+          <div class="card-sub">Investimento · ACOS · ROAS · % GMV via Ads</div>
+          <div style="margin-top:12px;font-size:11px;color:#aaa">Fonte necessária:<br>
+            <code style="background:#F4F5F7;padding:2px 5px;border-radius:4px">DM_PADS</code> ou <code style="background:#F4F5F7;padding:2px 5px;border-radius:4px">DM_PUBLICIDADE</code>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#555">Dados disponíveis em DM_EFICIENCIA_MLB:<br>
+            <span style="color:var(--g)">✓</span> PADS_INVESTMENT_LC<br>
+            <span style="color:var(--g)">✓</span> PADS_INVESTMENT_SELLER_LC<br>
+            <span style="color:var(--g)">✓</span> PADS_CBK_TOTAL_AMOUNT_LC
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>meli-bi-data · WHOWNER.DM_MARKETPLACE_COMMERCE_SELLERS + LK_COMP_FAVORABILITIES · Abr 2026</footer>
+
+<script>
+/* ═══════ DATA ═══════ */
+const MN=['Jan','Fev','Mar','Abr'];
+const G='#00A650',R='#E63946',Y='#F5A800',B='#3483FA',GR='#BDBDBD',NV='#0D1B2A';
+const PAL=[B,R,'#F39C12',G,'#9B59B6','#1ABC9C','#E67E22','#2980B9','#8E44AD','#D35400'];
+
+// Fonte: meli-bi-data.WHOWNER.DM_MARKETPLACE_COMMERCE_SELLERS
+// GMV/Orders 2026: real · GMV/Orders 2025: real (Jan-Abr) · BPC: LK_COMP_FAVORABILITIES · Log: real
+const S=[
+  // GMV 2026 real | GMV 2025 real (Jan-Abr) | Orders real | Log real (% por tipo)
+  {n:'EMCOMPRE',    cid:213658244,  seg:'MELI PRO',
+   bpc:[62.69,56.53,58.60,53.12],
+   gmv:[8094182,5501005,3494022,1522688],   gmv25:[3883236,3136536,3887642,3708400],
+   ord:[13941,9887,7581,3136],              ord25:[7989,6048,7198,6683],
+   log:{FBM:0,XD:21,Otro:79,FLEX:0}},
+
+  {n:'LUCAS-HOME',  cid:622556468,  seg:'MELI PRO',
+   bpc:[79.13,71.94,63.10,68.19],
+   gmv:[3751657,3867384,3642255,2039812],   gmv25:[1288214,971057,750663,847320],
+   ord:[3205,3405,3254,1861],               ord25:[988,869,888,1041],
+   log:{FBM:1,XD:2,Otro:97,FLEX:0}},
+
+  {n:'ZEBRANDS',    cid:1017072559, seg:'MELI PRO',
+   bpc:[43.38,47.94,63.55,48.84],
+   gmv:[3474145,3370161,3994807,2151904],   gmv25:[2114622,2151011,2283429,2441681],
+   ord:[2531,2585,2877,1545],               ord25:[1360,1257,1490,1680],
+   log:{FBM:62,XD:36,Otro:2,FLEX:0}},
+
+  {n:'CAMA INHOUSE',cid:361841053,  seg:'MELI PRO',
+   bpc:[82.03,77.82,79.64,78.52],
+   gmv:[2320137,1961850,2071554,957154],    gmv25:[633395,568747,593587,751514],
+   ord:[6347,5131,5150,2682],               ord25:[1477,1358,1801,2035],
+   log:{FBM:31,XD:2,Otro:68,FLEX:0}},
+
+  {n:'ZIDI',        cid:1176215393, seg:'MELI PRO',
+   bpc:[97.02,99.20,96.24,98.70],
+   gmv:[1136536,1144356,1143854,899182],    gmv25:[null,1740,null,2148],  // novo em 2026
+   ord:[2573,2763,3114,2219],               ord25:[null,1,null,2],
+   log:{FBM:0,XD:0,Otro:100,FLEX:0}},
+
+  {n:'KAZA MIX',    cid:1223087781, seg:'MELI PRO',
+   bpc:[66.33,78.55,78.10,76.46],
+   gmv:[837939,1158867,1764367,819171],     gmv25:[264194,464641,546457,454942],
+   ord:[581,761,1143,520],                  ord25:[227,320,406,286],
+   log:{FBM:0,XD:3,Otro:97,FLEX:0}},
+
+  {n:'BFCASAFULL',  cid:1479401290, seg:'MELI PRO',
+   bpc:[69.27,69.88,78.59,80.03],
+   gmv:[794582,585588,884961,421070],       gmv25:[null,null,10605,13718], // entrou Mar/25
+   ord:[3591,2097,3239,1729],               ord25:[null,null,17,22],
+   log:{FBM:100,XD:0,Otro:0,FLEX:0}},
+
+  {n:'SONNUS',      cid:2287647005, seg:'SELLER DEV',
+   bpc:[99.29,95.24,99.69,100.0],
+   gmv:[105332,176871,348724,236664],       gmv25:[null,null,null,null],   // sem histórico 2025
+   ord:[137,253,435,245],                   ord25:[null,null,null,null],
+   log:{FBM:1,XD:99,Otro:0,FLEX:0}},
+
+  {n:'ECONEWCOLCH', cid:130704477,  seg:'MELI PRO',
+   bpc:[99.57,92.62,98.15,null],
+   gmv:[51806,45064,28397,null],            gmv25:[441955,374905,412116,298221],
+   ord:[42,19,17,null],                     ord25:[272,228,230,157],
+   log:{FBM:0,XD:27,Otro:73,FLEX:0}},
+
+  {n:'ZIDI MÓVEIS', cid:656012015,  seg:'MELI PRO',
+   bpc:[81.47,72.99,64.31,62.11],
+   gmv:[61046,35135,27853,7718],            gmv25:[827922,461291,651385,851171],
+   ord:[42,28,24,8],                        ord25:[1904,756,1342,1738],
+   log:{FBM:0,XD:0,Otro:100,FLEX:0}},
+
+  {n:'BEGTRAV.',    cid:3032269507, seg:'SELLER DEV',
+   bpc:[62.99,40.14,65.68,48.42],
+   gmv:[2924,15967,47130,11528],            gmv25:[null,null,null,null],   // sem histórico 2025
+   ord:[13,116,266,65],                     ord25:[null,null,null,null],
+   log:{FBM:39,XD:33,Otro:0,FLEX:25}},
+
+  {n:'LUCAS NE',    cid:1746119501, seg:'MELI PRO',
+   bpc:[null,31.72,96.37,86.61],
+   gmv:[null,null,26502,20145],             gmv25:[1113,10384,7444,3546],
+   ord:[null,null,28,27],                   ord25:[1,8,4,3],
+   log:{FBM:0,XD:0,Otro:100,FLEX:0}},
+];
+
+// ─── REPUTAÇÃO — fonte: DM_MARKETPLACE_COMMERCE_SELLERS (SELLER_REPUTATION) + DM_EFICIENCIA_MLB ───
+// rep: valor original do BQ | hist: [Jan,Fev,Mar,Abr] rep mensal
+// cancel: [Jan,Fev,Mar,Abr] cancelamentos | orders: [Jan,Fev,Mar,Abr] pedidos totais
+const REP_DATA=[
+  {cid:213658244,  n:'EMCOMPRE',    rep:'green_platinum',ml:true,  hist:['green_platinum','green_platinum','green_platinum','green_platinum'], cancel:[861,514,373,98],  orders:[13941,9887,7581,3261]},
+  {cid:622556468,  n:'LUCAS-HOME',  rep:'light_green',  ml:false, hist:['light_green','light_green','light_green','light_green'],             cancel:[281,289,275,30],  orders:[3205,3405,3254,1975]},
+  {cid:1017072559, n:'ZEBRANDS',    rep:'green_platinum',ml:true,  hist:['green_platinum','green_platinum','green_platinum','green_platinum'], cancel:[240,231,230,84],  orders:[2531,2590,2877,1607]},
+  {cid:361841053,  n:'CAMA INHOUSE',rep:'green_platinum',ml:true,  hist:['green_platinum','green_platinum','green_platinum','green_platinum'], cancel:[454,392,306,115], orders:[6352,5138,5152,2835]},
+  {cid:1176215393, n:'ZIDI',        rep:'green_platinum',ml:true,  hist:['green_platinum','green_platinum','green_platinum','green_platinum'], cancel:[213,163,193,168], orders:[2573,2763,3114,2387]},
+  {cid:1223087781, n:'KAZA MIX',    rep:'green',        ml:false, hist:['green','green','green','green'],                                     cancel:[40,47,56,21],     orders:[581,761,1143,543]},
+  {cid:1479401290, n:'BFCASAFULL',  rep:'green_platinum',ml:true,  hist:['green_platinum','green_platinum','green_platinum','green_platinum'], cancel:[221,123,172,79],  orders:[3613,2107,3246,1795]},
+  {cid:2287647005, n:'SONNUS',      rep:'green_gold',   ml:true,  hist:['green_gold','green_gold','green_gold','green_gold'],                 cancel:[11,20,37,17],     orders:[137,253,435,259]},
+  {cid:130704477,  n:'ECONEWCOLCH', rep:'yellow',        ml:false, hist:['yellow','yellow','yellow',null],                                    cancel:[5,11,9,null],     orders:[42,19,17,null]},
+  {cid:656012015,  n:'ZIDI MÓVEIS', rep:'yellow',        ml:false, hist:['yellow','yellow','yellow','yellow'],                                cancel:[12,4,3,1],        orders:[42,28,24,8]},
+  {cid:3032269507, n:'BEGTRAV.',    rep:'green',        ml:false, hist:['green','green','green','green'],                                     cancel:[3,11,19,3],       orders:[13,116,266,67]},
+  {cid:1746119501, n:'LUCAS NE',    rep:'green',        ml:false, hist:[null,null,'green','green'],                                          cancel:[null,null,1,0],   orders:[null,null,28,31]},
+];
+
+// Mapeamento visual das reputações
+const REP_CFG={
+  green_platinum:{lbl:'ML Platinum', bg:'#00A650',tc:'#fff',rank:0},
+  green_gold:    {lbl:'ML Gold',     bg:'#FFB800',tc:'#333',rank:1},
+  light_green:   {lbl:'Verde',       bg:'#52BE80',tc:'#fff',rank:2},
+  green:         {lbl:'Verde',       bg:'#52BE80',tc:'#fff',rank:3},
+  yellow:        {lbl:'Amarelo',     bg:'#F5A800',tc:'#fff',rank:4},
+  orange:        {lbl:'Laranja',     bg:'#E67E22',tc:'#fff',rank:5},
+  red:           {lbl:'Vermelho',    bg:'#E63946',tc:'#fff',rank:6},
+};
+
+// Thresholds de alerta (% cancelamentos)
+const REP_THR=[
+  {rate:1,  msg:'Risco de perder Mercado Líder',cls:'br'},
+  {rate:2,  msg:'Risco de cair para Amarelo',  cls:'br'},
+  {rate:5,  msg:'Risco de cair para Laranja',  cls:'br'},
+  {rate:10, msg:'Risco crítico — Vermelho',    cls:'br'},
+];
+
+// Meio de Pagamento YTD — fonte: meli-bi-data.WHOWNER.DM_EFICIENCIA_MLB (PAYMENT_METHOD_1)
+const PAY_DATA=[
+  {cid:130704477,  n:'ECONEWCOLCH', visa:37472,   master:32288,   pix:10445,  consumer_credits:0,      elo:0,      account_money:0,      bolbradesco:2499,  amex:0},
+  {cid:213658244,  n:'EMCOMPRE',    visa:6437317, master:5789057, pix:3652848,consumer_credits:407320, elo:375990, account_money:338588, bolbradesco:119187,amex:72792},
+  {cid:361841053,  n:'CAMA INHOUSE',visa:2518568, master:2366434, pix:1241412,consumer_credits:122562, elo:144896, account_money:115779, bolbradesco:36958, amex:39403},
+  {cid:622556468,  n:'LUCAS-HOME',  visa:4215096, master:4082904, pix:2646278,consumer_credits:373447, elo:256314, account_money:246443, bolbradesco:83447, amex:44070},
+  {cid:656012015,  n:'ZIDI MÓVEIS', visa:40423,   master:35284,   pix:17402,  consumer_credits:5656,   elo:2872,   account_money:2740,   bolbradesco:1020,  amex:0},
+  {cid:1017072559, n:'ZEBRANDS',    visa:5137736, master:4194744, pix:1667160,consumer_credits:158327, elo:246327, account_money:198008, bolbradesco:41785, amex:52486},
+  {cid:1176215393, n:'ZIDI',        visa:1211629, master:1151426, pix:1181419,consumer_credits:158900, elo:90784,  account_money:114451, bolbradesco:40143, amex:12756},
+  {cid:1223087781, n:'KAZA MIX',    visa:1856469, master:1656098, pix:519494, consumer_credits:62956,  elo:107352, account_money:47899,  bolbradesco:17165, amex:25316},
+  {cid:1479401290, n:'BFCASAFULL',  visa:867144,  master:822568,  pix:603390, consumer_credits:70556,  elo:47894,  account_money:66036,  bolbradesco:8108,  amex:13538},
+  {cid:1746119501, n:'LUCAS NE',    visa:14638,   master:13091,   pix:9000,   consumer_credits:353,    elo:3400,   account_money:1602,   bolbradesco:0,     amex:471},
+  {cid:2287647005, n:'SONNUS',      visa:338968,  master:260478,  pix:128810, consumer_credits:20923,  elo:17938,  account_money:15638,  bolbradesco:3022,  amex:8179},
+  {cid:3032269507, n:'BEGTRAV.',    visa:22360,   master:29066,   pix:13992,  consumer_credits:1355,   elo:1062,   account_money:1956,   bolbradesco:1071,  amex:517},
+];
+// ─── CLIPS — fonte: meli-bi-data.WHOWNER.LK_COBERTURA_GMV_CLIPS_VIP_PDP_NV ───
+// sol=NOMBRE_SOLUCION | nivel=NIVEL_SOLUCION | gmv_clips=TOTAL_GMV | vip=CLIP_GMV_VIP | pdp=CLIP_GMV_PDP
+// Índice [Jan,Fev,Mar,Abr]
+const CLIPS_DATA=[
+  {cid:130704477,  n:'ECONEWCOLCH', sol:null,                      nivel:null,       gmv_clips:[9224,  4750,  2274,  null],   vip:[3370,2254,1782,null],  pdp:[3447,1339,492,null]},
+  {cid:213658244,  n:'EMCOMPRE',    sol:'Mercado Seller',          nivel:'Platinum', gmv_clips:[1467049,1024800,606803,285920], vip:[14210,11495,11934,2749], pdp:[1306189,878676,478837,233561]},
+  {cid:361841053,  n:'CAMA INHOUSE',sol:'Ecommerce Puro',          nivel:'Platinum', gmv_clips:[413997,360127,366297,177962],  vip:[21623,16709,17357,11440], pdp:[345553,308298,310776,151636]},
+  {cid:622556468,  n:'LUCAS-HOME',  sol:'ECF Consultoria',         nivel:'Platinum', gmv_clips:[685214,729373,645778,394863],  vip:[63529,60175,34692,48460], pdp:[4808,12719,6638,2463]},
+  {cid:656012015,  n:'ZIDI MÓVEIS', sol:null,                      nivel:null,       gmv_clips:[10750, 6054,  5320,  1358],    vip:[0,0,0,0],              pdp:[0,0,161,163]},
+  {cid:1017072559, n:'ZEBRANDS',    sol:'3M Consultoria',          nivel:'Gold',     gmv_clips:[602220,599794,685411,400874],  vip:[0,0,1456,618],         pdp:[506162,502508,581569,320620]},
+  {cid:1176215393, n:'ZIDI',        sol:null,                      nivel:null,       gmv_clips:[201398,211969,197849,164418],  vip:[8178,3433,1161,587],   pdp:[73267,89302,89444,57405]},
+  {cid:1223087781, n:'KAZA MIX',    sol:'MIB COMMERCE',            nivel:null,       gmv_clips:[149869,214792,312179,154159],  vip:[28924,21282,40231,35442], pdp:[86630,139774,213534,86023]},
+  {cid:1479401290, n:'BFCASAFULL',  sol:null,                      nivel:null,       gmv_clips:[139803,105269,159864,77817],   vip:[938,1133,8556,85],     pdp:[117244,83193,124825,66483]},
+  {cid:1746119501, n:'LUCAS NE',    sol:null,                      nivel:null,       gmv_clips:[null,  null,  4867,  3959],    vip:[null,null,0,0],        pdp:[null,null,0,0]},
+  {cid:2287647005, n:'SONNUS',      sol:'Univ. Marketplaces',      nivel:'Platinum', gmv_clips:[18861, 32756, 59018, 42767],   vip:[4297,3783,5708,6042],  pdp:[4198,11301,39569,29105]},
+  {cid:3032269507, n:'BEGTRAV.',    sol:null,                      nivel:null,       gmv_clips:[502,   2856,  8295,  2171],    vip:[0,276,703,42],         pdp:[183,2429,6986,1632]},
+];
+
+// ─── COMBO (PSJ=Sem Juros/Premium · PCJ=Com Juros/Clássico) — fonte: DM_EFICIENCIA_MLB ───
+// psj/pcj: [Jan,Fev,Mar,Abr] GMV_LC
+const COMBO_DATA=[
+  {cid:213658244, n:'EMCOMPRE',    psj:[6899911,4524317,2320237,650804],  pcj:[1126184,912714,1138870,918978]},
+  {cid:622556468, n:'LUCAS-HOME',  psj:[1068973,1059388,1043270,465836],  pcj:[2631252,2767652,2569549,1652854]},
+  {cid:1017072559,n:'ZEBRANDS',    psj:[3464735,3330921,3950684,2216828], pcj:[0,1688,1498,0]},
+  {cid:361841053, n:'CAMA INHOUSE',psj:[2043456,1732988,1798747,858651],  pcj:[271507,223361,266085,148517]},
+  {cid:1176215393,n:'ZIDI',        psj:[142120,263048,569430,553866],     pcj:[992924,877086,561289,400061]},
+  {cid:1223087781,n:'KAZA MIX',    psj:[837689,1158613,1763821,858354],   pcj:[180,74,476,0]},
+  {cid:1479401290,n:'BFCASAFULL',  psj:[346669,337570,488666,202264],     pcj:[451885,249807,394511,231676]},
+  {cid:2287647005,n:'SONNUS',      psj:[82097,157454,276819,178122],      pcj:[22640,19000,71905,71417]},
+  {cid:130704477, n:'ECONEWCOLCH', psj:[48567,40472,24529,null],          pcj:[3239,4592,3868,null]},
+  {cid:656012015, n:'ZIDI MÓVEIS', psj:[34888,23438,16389,5110],          pcj:[26158,11697,11464,2609]},
+  {cid:3032269507,n:'BEGTRAV.',    psj:[677,15880,44622,9953],            pcj:[2238,87,2387,1779]},
+  {cid:1746119501,n:'LUCAS NE',    psj:[null,null,1516,2981],             pcj:[null,null,23885,19440]},
+];
+
+// ─── PROMOÇÕES — fonte: DM_EFICIENCIA_MLB ───
+// dxi_s/m=Desconto por Item(seller/meli) · dxb_s/m=Desc.Bancário · ltg_s=Relâmpago · dod_s=Oferta do Dia · cupons=Cupons MELI
+const PROMO_DATA=[
+  {cid:213658244, n:'EMCOMPRE',    dxi_s:[2518780,1823379,735630,622132], dxi_m:[425568,287309,111774,49605], dxb_s:[35577,33247,2359,467],    dxb_m:[12626,20841,36992,6696],  ltg_s:[68949,2723,11737,0],    dod_s:[419055,91841,0,0],    cupons:[66534,30425,14573,9855],  gmv:[8026095,5437031,3459107,1569782]},
+  {cid:622556468, n:'LUCAS-HOME',  dxi_s:[1117792,1256820,1219155,709625],dxi_m:[144076,160291,166551,104754],dxb_s:[2977,2355,2390,5711],     dxb_m:[1320,821,4054,4461],     ltg_s:[7410,7890,4658,0],      dod_s:[19186,2965,0,0],      cupons:[7569,4041,4903,5384],     gmv:[3700225,3827040,3612819,2118690]},
+  {cid:1017072559,n:'ZEBRANDS',    dxi_s:[441307,1293369,1118746,788413], dxi_m:[40525,129088,113458,77906],  dxb_s:[8412,1585,676,14565],     dxb_m:[10755,11935,11244,2992],  ltg_s:[0,66696,961,0],         dod_s:[0,0,85629,0],         cupons:[44555,22522,16780,7285],   gmv:[3464735,3332609,3952182,2216828]},
+  {cid:361841053, n:'CAMA INHOUSE',dxi_s:[416063,312682,309166,138746],   dxi_m:[69425,57581,58855,34361],    dxb_s:[8958,11210,1515,1721],    dxb_m:[6978,6337,15241,7778],   ltg_s:[0,0,1461,686],          dod_s:[0,8589,0,0],          cupons:[14122,8861,10539,6263],   gmv:[2314963,1956350,2064831,1007169]},
+  {cid:1176215393,n:'ZIDI',        dxi_s:[482123,130137,89999,151092],    dxi_m:[32790,15490,20387,22681],    dxb_s:[1043,1181,1894,1728],     dxb_m:[0,356,5808,2734],        ltg_s:[398,682,0,0],           dod_s:[0,0,0,0],             cupons:[4382,3243,5468,5465],     gmv:[1135044,1140134,1130719,953928]},
+  {cid:1223087781,n:'KAZA MIX',    dxi_s:[114152,133424,343762,171354],   dxi_m:[17975,18000,43189,24158],    dxb_s:[70,258,278,261],          dxb_m:[937,2149,5315,2131],     ltg_s:[0,0,0,861],             dod_s:[0,0,0,0],             cupons:[2068,1534,3594,1099],     gmv:[837869,1158687,1764297,858354]},
+  {cid:1479401290,n:'BFCASAFULL',  dxi_s:[224554,193881,210537,104162],   dxi_m:[42626,34520,34405,9256],     dxb_s:[3259,5773,392,208],       dxb_m:[1574,127,7581,3299],     ltg_s:[0,0,1111,0],            dod_s:[0,0,0,0],             cupons:[6527,4201,5222,4675],     gmv:[798554,587377,883177,433940]},
+  {cid:2287647005,n:'SONNUS',      dxi_s:[2784,2540,1476,147155],         dxi_m:[297,274,159,3599],           dxb_s:[0,0,185,175],             dxb_m:[0,15,1196,60],           ltg_s:[0,2145,0,0],            dod_s:[0,0,0,0],             cupons:[571,371,817,714],         gmv:[104737,176454,348724,249539]},
+  {cid:3032269507,n:'BEGTRAV.',    dxi_s:[0,0,422,173],                   dxi_m:[0,0,49,21],                  dxb_s:[0,7,25,4],                dxb_m:[0,7,319,96],             ltg_s:[0,0,0,0],               dod_s:[0,0,0,0],             cupons:[57,103,177,110],          gmv:[2914,15967,47010,11732]},
+];
+
+const PAY_MET=['visa','master','pix','consumer_credits','elo','account_money','bolbradesco','amex'];
+const PAY_LBL={visa:'Visa',master:'Mastercard',pix:'PIX',consumer_credits:'Crédito MP',elo:'Elo',account_money:'Conta Digital',bolbradesco:'Boleto',amex:'Amex'};
+const PAY_COL={visa:'#1A1F71',master:'#EB001B',pix:'#00A650',consumer_credits:'#FFB800',elo:'#003B95',account_money:'#3483FA',bolbradesco:'#E67E22',amex:'#2E77BC'};
+
+// ITE_ITEM_ID reais — fonte: meli-bi-data.WHOWNER.DM_MARKETPLACE_COMMERCE_SELLERS
+// Top itens por seller · GMV [Jan,Fev,Mar,Abr 2026] · null=sem venda no mês · Queried 2026-04-17
+const ITEMS=[
+  // ── EMCOMPRE (15 itens reais) ────────────────────────────────────────────
+  {id:4038034734,nm:'Colchão Casal Ortopédico D33 Vácuo 138x188cm Bf Colchões',  sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[1075707,901527,240094,80147], units:[1455,1270,256,73], p:[1199,1199,1199,1199],vc_neg:false,bpc_i:[0.64,0.58,0.55,0.50],status:'Ativo'},
+  {id:3413101541,nm:'Colchão Solteiro Firme Espuma D33 88x188 Cinza Bf',         sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[844126,312327,107991,33081], units:[2194,766,209,66],  p:[586.51,586.51,586.51,586.51],vc_neg:true,bpc_i:[0.58,0.52,0.50,0.46],status:'Ativo'},
+  {id:3413101699,nm:'Colchão Casal Firme D33 Antialérgico Cinza Bf',             sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[435511,216984,101086,31468], units:[699,357,134,42],   p:[899,899,899,899],vc_neg:false,bpc_i:[0.61,0.55,0.52,0.47],status:'Ativo'},
+  {id:3770560992,nm:'Colchão Solteiro D33 Vácuo 88x188cm Bf Colchões Branco',   sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[423590,398364,231810,32616], units:[783,685,379,45],   p:[1241.37,1241.37,1241.37,1241.37],vc_neg:true,bpc_i:[0.62,0.55,0.52,0.48],status:'Ativo'},
+  {id:4229870086,nm:'Colchão Casal D45 Extra Firme 138x188 Preto Bf',           sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[311515,201426,102395,27441], units:[490,314,125,35],   p:[899,899,899,899],vc_neg:false,bpc_i:[0.62,0.56,0.55,0.51],status:'Ativo'},
+  {id:4277570010,nm:'Colchão Casal D45 138x188x24cm Bf Colchões Cinza',         sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[306447,170345,126817,70643], units:[353,193,113,70],   p:[1099,1099,1099,1099],vc_neg:false,bpc_i:[0.62,0.56,0.55,0.51],status:'Ativo'},
+  {id:3368003061,nm:'Colchão Solteiro D28 Vácuo 88x188cm Bf Colchões Branco',   sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[233608,130691,41299,31913],  units:[491,275,64,47],    p:[819,819,819,819],vc_neg:true,bpc_i:[0.60,0.53,0.50,0.46],status:'Ativo'},
+  {id:4233147514,nm:'Colchão Casal D45 Vácuo 138x188cm Bf Colchões Branco',     sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[234398,242862,110420,40918], units:[242,259,100,32],   p:[1399,1399,1399,1399],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:4242811158,nm:'Colchão Queen D33 Vácuo 158x198cm Bf Colchões Branco',     sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[153734,159278,100062,28873], units:[166,166,88,22],    p:[1539,1539,1539,1539],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:3417377011,nm:'Colchão Queen Firme D33 158x198x17cm Cinza Bf',            sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[195878,62959,22616,9649],    units:[278,84,24,11],     p:[1059,1059,1059,1059],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:3541472563,nm:'Colchão Queen D45 158x198x24cm Bf Colchões Cinza',         sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[197336,88053,29809,30239],   units:[204,84,21,25],     p:[1200.81,1200.81,1200.81,1200.81],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:3561673047,nm:'Colchão Casal Molas Ensacadas Pillow Top Premium Sleep',   sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[67352,72250,27818,55558],    units:[43,45,12,32],      p:[1729,1729,1729,1729],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:3774679174,nm:'Colchão Queen D45 Vácuo 158x198cm Bf Colchões Branco',     sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[101976,78712,56329,27862],   units:[86,66,41,18],      p:[1829,1829,1829,1829],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:4229867692,nm:'Colchão Solteiro D45 Extra Firme 88x188 Preto Bf',         sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESSES',      gmv:[76199,45336,45654,15331],    units:[173,104,86,28],    p:[616.35,616.35,616.35,616.35],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+  {id:5300579088,nm:'Pillow Top Casal D33 Hipoalergênico 138x188x5cm Branco',   sel:'EMCOMPRE',cid:213658244,domain:'MLB-MATTRESS_COVERS', gmv:[69782,76385,132228,39519],   units:[190,210,353,92],   p:[429,429,429,429],vc_neg:false,bpc_i:[0.63,0.57,0.54,0.50],status:'Ativo'},
+
+  // ── ZEBRANDS (6 itens) ───────────────────────────────────────────────────
+  {id:3901877110,nm:'Colchão Casal Luuna Support 2 Espumas Ortopédica Firme',   sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[522015,477779,534593,266641],units:[430,385,433,213],  p:[1260.03,1260.03,1260.03,1260.03],vc_neg:false,bpc_i:[0.44,0.48,0.60,0.50],status:'Ativo'},
+  {id:3950434672,nm:'Colchão Luuna Blue Casal 3 Espumas Branco E Azul',         sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[404437,434579,494505,301031],units:[233,253,289,178],  p:[1750,1750,1750,1750],vc_neg:false,bpc_i:[0.42,0.46,0.58,0.47],status:'Ativo'},
+  {id:3901322668,nm:'Colchão Queen Luuna Support 2 Espumas Ortopédica Firme',   sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[375485,419297,308134,191147],units:[278,303,216,137],  p:[1399,1399,1399,1399],vc_neg:false,bpc_i:[0.43,0.47,0.56,0.46],status:'Ativo'},
+  {id:3877313608,nm:'Colchão Luuna Blue Queen 3 Espumas Branco E Azul',         sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[357645,223180,458869,130244],units:[185,120,251,68],   p:[2000,2000,2000,2000],vc_neg:false,bpc_i:[0.41,0.45,0.58,0.44],status:'Ativo'},
+  {id:3992149060,nm:'Colchão Queen Luuna Original Firme Garantia 10 Anos',      sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[212590,207432,160562,106699],units:[75,76,58,36],      p:[2989,2989,2989,2989],vc_neg:false,bpc_i:[0.43,0.47,0.60,0.49],status:'Ativo'},
+  {id:3433587291,nm:'Colchão Casal Luuna Original Firme Garantia 10 Anos',      sel:'ZEBRANDS',cid:1017072559,domain:'MLB-MATTRESSES',     gmv:[143517,118612,208053,69335], units:[58,48,87,28],      p:[2599,2599,2599,2599],vc_neg:false,bpc_i:[0.44,0.49,0.62,0.51],status:'Ativo'},
+
+  // ── LUCAS-HOME (3 itens) ─────────────────────────────────────────────────
+  {id:5457250716,nm:'Bicama Box Baú Solteiro C/ Colchão + Cama Auxiliar Preto', sel:'LUCAS-HOME',cid:622556468,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[184340,180664,144685,128364],units:[214,219,171,160],p:[842.06,842.06,842.06,842.06],vc_neg:false,bpc_i:[0.80,0.73,0.64,0.69],status:'Ativo'},
+  {id:4264197275,nm:'Cama Box Baú Casal Colchão Ortobom D33 Firme Preto',       sel:'LUCAS-HOME',cid:622556468,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[116155,165167,124113,77919], units:[83,119,90,58],    p:[1337.01,1337.01,1337.01,1337.01],vc_neg:false,bpc_i:[0.79,0.72,0.64,0.69],status:'Ativo'},
+  {id:5299208352,nm:'Box Baú Solteiro Colchão D33 Ortobom Airtech + Auxiliar',  sel:'LUCAS-HOME',cid:622556468,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[109768,110068,110027,90384], units:[85,86,86,70],     p:[1302.16,1302.16,1302.16,1302.16],vc_neg:false,bpc_i:[0.79,0.72,0.64,0.69],status:'Ativo'},
+
+  // ── CAMA INHOUSE (5 itens) ───────────────────────────────────────────────
+  {id:4026088367,nm:'Duoflex Nasa X Travesseiro Kit 2 Unidades 60x40cm Branco', sel:'CAMA INHOUSE',cid:361841053,domain:'MLB-PILLOWS',   gmv:[90285,146469,127246,80729],  units:[466,751,640,405],p:[199.88,199.88,199.88,199.88],vc_neg:false,bpc_i:[0.83,0.79,0.81,0.80],status:'Ativo'},
+  {id:3907563829,nm:'Base Box Baú Queen 158x198 Courino Linho Areia Pistão',    sel:'CAMA INHOUSE',cid:361841053,domain:'MLB-BOX_SPRING_BASES',gmv:[81928,129888,143175,76138],units:[72,112,120,62],  p:[1249,1249,1249,1249],vc_neg:false,bpc_i:[0.83,0.79,0.81,0.80],status:'Ativo'},
+  {id:3884270343,nm:'Base Box Baú Solteiro 88x188 Courino Linho Branco Pistão', sel:'CAMA INHOUSE',cid:361841053,domain:'MLB-BOX_SPRING_BASES',gmv:[39354,46998,37106,14360],  units:[66,80,62,23],    p:[629,629,629,629],vc_neg:false,bpc_i:[0.83,0.79,0.81,0.80],status:'Ativo'},
+  {id:3884270335,nm:'Base Box Baú Solteiro 88x188 Courino Linho Areia Pistão',  sel:'CAMA INHOUSE',cid:361841053,domain:'MLB-BOX_SPRING_BASES',gmv:[32266,31718,38573,19332],  units:[54,54,64,31],    p:[629,629,629,629],vc_neg:false,bpc_i:[0.83,0.79,0.81,0.80],status:'Ativo'},
+  {id:3907642945,nm:'Base Box Baú Casal 138x188 Courino Linho Bege Pistão',     sel:'CAMA INHOUSE',cid:361841053,domain:'MLB-BOX_SPRING_BASES',gmv:[33099,26514,46881,14579],  units:[51,39,69,21],    p:[699,699,699,699],vc_neg:false,bpc_i:[0.83,0.79,0.81,0.80],status:'Ativo'},
+
+  // ── ZIDI (3 itens) ───────────────────────────────────────────────────────
+  {id:4282170083,nm:'Colchão Casal Zidi San Francisco Espuma D33 138x188cm',    sel:'ZIDI',cid:1176215393,domain:'MLB-MATTRESSES',         gmv:[48982,75729,213000,134045],  units:[123,193,610,391],p:[341.66,341.66,341.66,341.66],vc_neg:false,bpc_i:[0.97,0.99,0.97,0.98],status:'Ativo'},
+  {id:5370161222,nm:'Colchão Casal Cinza Miami Molas Ensacadas 138x188 Zidi',   sel:'ZIDI',cid:1176215393,domain:'MLB-MATTRESSES',         gmv:[62189,81036,77963,61956],    units:[126,163,157,125],p:[461.34,461.34,461.34,461.34],vc_neg:false,bpc_i:[0.97,0.99,0.97,0.98],status:'Ativo'},
+  {id:5953767878,nm:'Colchão Solteiro Cinza Miami Molas Ensacadas 88x188 Zidi', sel:'ZIDI',cid:1176215393,domain:'MLB-MATTRESSES',         gmv:[222944,162915,32866,null],   units:[633,450,94,null],p:[379,379,379,null],vc_neg:false,bpc_i:[0.97,0.98,0.97,null],status:'Finalizado'},
+
+  // ── KAZA MIX (15 itens reais — Ortobom) ──────────────────────────────────
+  {id:3929158413,nm:'Cama Box Baú Colchão Airtech Molas Casal Ortobom',         sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[83608,141814,159029,90780], units:[48,80,91,51],  p:[1779.99,1779.99,1779.99,1779.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:5441386332,nm:'Cama Box Baú Casal Preto Airtech D45 Ortobom Extra Firme', sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[56628,121220,193630,45194], units:[39,86,142,32], p:[1419.99,1419.99,1419.99,1419.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:3713164339,nm:'Cama Box Baú Queen Ortobom Airtech Molas Bege Com Suede',  sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[58630,80815,139265,41701], units:[22,31,56,17],  p:[2453,2453,2453,2453],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:4367263313,nm:'Cama Box Baú Ortobom Airtech Springpocket Casal Bege',     sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[1439,55120,116607,47170],  units:[1,40,88,37],   p:[1270,1270,1270,1270],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:3715434687,nm:'Cama Box Baú Viúvo Colchão Ortobom Airtech Springpocket',  sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[12508,37030,85077,48134],  units:[8,25,59,35],   p:[1364,1364,1364,1364],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:4776517666,nm:'Cama Box Baú Casal Ortobom Airtech D45 Extra Firme Bege',  sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[32697,29246,65809,17604],  units:[22,20,46,12],  p:[1539.99,1539.99,1539.99,1539.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:3747974055,nm:'Cama Box Baú Casal Preto Ortobom Airtech Molas Ensacadas', sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[18011,52253,29795,17220],  units:[11,32,20,12],  p:[1435,1435,1435,1435],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:6017593660,nm:'Cama Box Casal Ortobom Airtech Molas Euro Pillow Bege',    sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[4632,26484,55963,17138],   units:[3,18,40,12],   p:[1433.99,1433.99,1433.99,1433.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:3319128799,nm:'Cama Box Baú Casal Colchão Ortobom Airtech Springpocket',  sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[75779,11061,5266,5340],    units:[44,6,3,3],     p:[1868.99,1868.99,1868.99,1868.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:3713171359,nm:'Cama Box Baú Ortobom Airtech Springpocket Cinza 128x188',  sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[26739,19301,35927,15124],  units:[17,13,25,11],  p:[1364,1364,1364,1364],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:5686889290,nm:'Cama Baú Solteiro Bege + Colchão Airtech Ortobom Bege',    sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[40066,23140,29161,1488],   units:[29,16,21,1],   p:[1487.99,1487.99,1487.99,1487.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:5787824330,nm:'Colchão Airtech Molas Casal Ortobom 138x188x25 Bege',      sel:'KAZA MIX',cid:1223087781,domain:'MLB-MATTRESSES',     gmv:[5725,19036,32838,17891],    units:[5,17,30,16],   p:[1119.99,1119.99,1119.99,1119.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:5209695520,nm:'Cama Box Baú Bege Colchão Airtech Springpocket Queen',     sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[2631,13341,19215,39150],   units:[1,5,7,15],     p:[2614.99,2614.99,2614.99,2614.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:4264194233,nm:'Cama Box Casal Baú Preto Kazamix Ortobom D45 Extra Firme', sel:'KAZA MIX',cid:1223087781,domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',gmv:[5929,6072,34691,23398],    units:[4,4,24,16],    p:[1539.99,1539.99,1539.99,1539.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+  {id:4059195059,nm:'Colchão Airtech Springpocket Molas Casal Ortobom Bege',    sel:'KAZA MIX',cid:1223087781,domain:'MLB-MATTRESSES',     gmv:[17421,11136,22638,15751],   units:[16,10,21,14],  p:[1174.99,1174.99,1174.99,1174.99],vc_neg:false,bpc_i:[0.68,0.80,0.79,0.77],status:'Ativo'},
+
+  // ── BFCASAFULL (8 itens reais — colchões + toalhas Karsten) ──────────────
+  {id:5347105254,nm:'Colchão Solteiro D45 Vácuo 88x188cm Bf Colchões Branco',   sel:'BFCASAFULL',cid:1479401290,domain:'MLB-MATTRESSES',  gmv:[154396,134344,214897,85047], units:[218,196,277,102],p:[1119,1119,1119,1119],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5346953256,nm:'Colchão Casal D33 Dobrável 3 Em 1 Firme Vácuo Preto',      sel:'BFCASAFULL',cid:1479401290,domain:'MLB-MATTRESSES',  gmv:[76483,84387,77579,36208],    units:[121,132,105,43], p:[1119,1119,1119,1119],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5974473220,nm:'Jogo Toalhas Karsten 4 Peças Banho E Rosto Rosa/Azul',     sel:'BFCASAFULL',cid:1479401290,domain:'MLB-BATH_TOWELS',  gmv:[105965,44515,60199,20274],   units:[882,379,571,186],p:[109,109,109,109],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5670003834,nm:'Colchão Solteiro Vácuo Dual Face Max Flowing 88x188',      sel:'BFCASAFULL',cid:1479401290,domain:'MLB-MATTRESSES',  gmv:[38704,44364,55075,20505],    units:[65,76,83,28],    p:[949,949,949,949],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5974651506,nm:'Jogo Toalhas Karsten 4 Peças Salmão/Azul Liso',           sel:'BFCASAFULL',cid:1479401290,domain:'MLB-BATH_TOWELS',  gmv:[39646,29525,12557,21508],    units:[331,248,102,197],p:[109,109,109,109],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5974652332,nm:'Jogo Toalhas Karsten 4 Peças Bege Liso',                  sel:'BFCASAFULL',cid:1479401290,domain:'MLB-BATH_TOWELS',  gmv:[78255,11360,6743,null],      units:[651,97,53,null], p:[187.20,187.20,187.20,187.20],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Pausado'},
+  {id:3975574921,nm:'Colchão Solteiro Dobrável 3 Em 1 D33 Firme Vácuo Preto',  sel:'BFCASAFULL',cid:1479401290,domain:'MLB-MATTRESSES',  gmv:[10138,44035,19383,10454],    units:[20,107,39,19],   p:[679,679,679,679],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Ativo'},
+  {id:5974713512,nm:'Jogo Toalhas Karsten 4 Peças Bege/Marrom Liso',           sel:'BFCASAFULL',cid:1479401290,domain:'MLB-BATH_TOWELS',  gmv:[7708,null,68523,28449],      units:[61,null,568,261],p:[109,109,109,109],vc_neg:false,bpc_i:[0.71,0.71,0.80,0.81],status:'Pausado'},
+
+  // ── SONNUS (15 itens reais — Inducol) ────────────────────────────────────
+  {id:6216177866,nm:'Colchão Ortopédico Casal Inducol D33 Cinza Vácuo',        sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[null,24497,101236,70070],   units:[null,35,144,96], p:[729.9,729.9,729.9,729.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4166620101,nm:'Colchão Casal Enjoy Inducol 138x198 c/ Visco 25cm Branco', sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',       gmv:[19687,57195,90472,13668],   units:[18,52,82,12],    p:[4029,4029,4029,4029],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4272447847,nm:'Colchão Casal Inducol Pequim Molas Euro Pillow Bege',      sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[25198,19198,20398,33453],   units:[21,16,17,28],    p:[3719,3719,3719,3719],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4577562389,nm:'Colchão Casal Enjoy Inducol 138x188 c/ Visco Branco',      sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[null,null,null,38106],      units:[null,null,null,37],p:[3908.13,3908.13,3908.13,3908.13],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4512381461,nm:'Colchão Queen Enjoy Inducol 158x198 100% Espuma Cinza',    sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[null,null,36747,21749],     units:[null,null,26,15],p:[4434.84,4434.84,4434.84,4434.84],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4112741749,nm:'Colchão King Enjoy Inducol 193x203 c/ Visco 25cm',         sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[3900,4800,11249,31152],     units:[3,3,7,19],       p:[1649.9,1649.9,1649.9,1649.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:5784306500,nm:'Puff Multiuso Dobrável Inducol 3 Em 1 Cinza',             sel:'SONNUS',cid:2287647005,domain:'MLB-POUFS',              gmv:[11264,23636,15895,null],    units:[37,79,53,null],  p:[972,972,972,972],vc_neg:false,bpc_i:[0.99,0.99,0.99,null],status:'Pausado'},
+  {id:4112739447,nm:'Colchão Queen Enjoy Inducol 158x198 c/ Visco 25cm',        sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[17244,9099,6700,1450],      units:[15,7,5,1],       p:[4434.84,4434.84,4434.84,4434.84],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:5974689830,nm:'Colchão Queen Inducol Pequim Molas Ultralastic Branco/Bege',sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',       gmv:[7455,3900,7799,2561],       units:[5,3,6,2],        p:[1299.9,1299.9,1299.9,1299.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4284796935,nm:'Colchão Solteiro Inducol Pequim Euro Pillow Bege',         sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[8099,7199,4500,null],       units:[9,8,5,null],     p:[872.9,872.9,872.9,872.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,null],status:'Ativo'},
+  {id:6202777490,nm:'Colchão Solteiro Inducol Soft D33 88x188 Cinza',           sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[1000,500,2600,12501],       units:[2,1,5,22],       p:[569.9,569.9,569.9,569.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:5695727570,nm:'Colchão Solteiro Inducol Enjoy 88x188 Viscoelástica Branco',sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',      gmv:[2700,5699,3000,4970],       units:[3,6,3,5],        p:[2968,2968,2968,2968],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4455448347,nm:'Colchão Casal Enjoy Inducol 138x188 c/ Visco Branco',      sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[null,null,6599,6747],       units:[null,null,6,6],  p:[3908.13,3908.13,3908.13,3908.13],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:4201089405,nm:'Travesseiro Sense Fresh Hexa Comfort Skincare Branco/Roxo', sel:'SONNUS',cid:2287647005,domain:'MLB-PILLOWS',          gmv:[3205,5166,2214,737],        units:[13,21,9,3],      p:[244.77,244.77,244.77,244.77],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+  {id:6537599624,nm:'Colchão Inducol Paris Europillow Branco Casal',            sel:'SONNUS',cid:2287647005,domain:'MLB-MATTRESSES',        gmv:[null,null,null,8039],       units:[null,null,null,6],p:[1339.9,1339.9,1339.9,1339.9],vc_neg:false,bpc_i:[0.99,0.99,0.99,1.0],status:'Ativo'},
+];
+
+const BPC_OFF=[
+  {id:3413101541,nm:'Colchão Solteiro Ortopédico Firme D33 Cinza Bf',    sel:'EMCOMPRE',  cid:213658244, domain:'MLB-MATTRESSES',bpc_i:[0.58,0.52,0.50,0.46],part:[9.1,9.8,10.5,11.2],status:'Ativo'},
+  {id:3901877110,nm:'Colchão Casal Luuna Support 2 Espumas',              sel:'ZEBRANDS',  cid:1017072559,domain:'MLB-MATTRESSES',bpc_i:[0.44,0.48,0.60,0.50],part:[12.1,11.8,9.2,13.5],status:'Ativo'},
+  {id:3877313608,nm:'Colchão Luuna Blue Queen 3 Espumas',                 sel:'ZEBRANDS',  cid:1017072559,domain:'MLB-MATTRESSES',bpc_i:[0.41,0.45,0.58,0.44],part:[8.8,8.2,7.1,9.4],status:'Ativo'},
+  {id:3770560992,nm:'Colchão Solteiro D33 A Vácuo 88x188cm Branco Bf',   sel:'EMCOMPRE',  cid:213658244, domain:'MLB-MATTRESSES',bpc_i:[0.62,0.55,0.52,0.48],part:[7.2,8.1,9.0,9.8],status:'Ativo'},
+  {id:3413101699,nm:'Colchão Casal D33 Antialérgico Cinza Bf',            sel:'EMCOMPRE',  cid:213658244, domain:'MLB-MATTRESSES',bpc_i:[0.61,0.55,0.52,0.47],part:[5.8,6.2,7.1,7.9],status:'Ativo'},
+  {id:4264197275,nm:'Cama Box Baú Casal Ortobom D33 Firme Preto',         sel:'LUCAS-HOME',cid:622556468, domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',bpc_i:[0.79,0.72,0.64,0.69],part:[4.1,4.0,4.5,5.2],status:'Ativo'},
+  {id:5457250716,nm:'Bicama Box Baú Solteiro + Cama Auxiliar Preto',      sel:'LUCAS-HOME',cid:622556468, domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',bpc_i:[0.80,0.73,0.64,0.69],part:[4.8,5.2,6.0,6.5],status:'Ativo'},
+  {id:3992149060,nm:'Colchão Queen Luuna Original Firme 10 Anos',         sel:'ZEBRANDS',  cid:1017072559,domain:'MLB-MATTRESSES',bpc_i:[0.43,0.47,0.60,0.49],part:[9.8,9.2,7.8,10.1],status:'Ativo'},
+];
+
+/* ═══════ HELPERS ═══════ */
+function fmtM(v){if(v==null)return'—';if(v>=1e9)return'R$ '+(v/1e9).toFixed(1).replace('.',',')+'B';if(v>=1e6)return'R$ '+(v/1e6).toFixed(1).replace('.',',')+'M';if(v>=1e3)return'R$ '+(v/1e3).toFixed(1).replace('.',',')+'K';return'R$ '+v.toFixed(0);}
+function fmtR(v){if(v==null)return'—';const s=v.toFixed(2).replace('.',',');const p=s.split(',');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return'R$ '+p.join(',');}
+function fmtP(v){if(v==null)return'—';return(v>0?'+':'')+v.toFixed(1)+'%';}
+// Formato sem decimal (para labels em gráficos)
+function fmtMInt(v){if(v==null)return'—';if(v>=1e9)return'R$'+Math.round(v/1e9)+'B';if(v>=1e6)return'R$'+Math.round(v/1e6)+'M';if(v>=1e3)return'R$'+Math.round(v/1e3)+'K';return'R$'+Math.round(v);}
+function dc(v){return v==null?'fl':+v>0?'up':'dn';}
+// MTD: hoje é 16/Abr — comparar períodos equivalentes
+const CUR_DAY=16, CUR_MI=3, M_DAYS=[31,28,31,30]; // dias por mês Jan-Abr
+// Ajusta valor do mês anterior para equivaler ao mesmo número de dias do mês atual
+function mtdAdj(prevVal, prevMI, curMI){
+  if(prevVal==null)return null;
+  if(curMI===CUR_MI && prevMI===CUR_MI-1) return prevVal*(CUR_DAY/M_DAYS[prevMI]);
+  return prevVal;
+}
+function mom(a,b){return b&&b!=0?((a-b)/b*100).toFixed(1):null;}
+function momMTD(a, prevVal, prevMI, curMI){
+  const adj=mtdAdj(prevVal,prevMI,curMI);
+  return adj&&adj!=0?((a-adj)/adj*100).toFixed(1):null;
+}
+function heatBg(v){if(v==null)return'#F4F5F7';if(v>=80)return G;if(v>=70)return Y;if(v>=60)return'#E67E22';return R;}
+// id é numérico (ITE_ITEM_ID do BQ). URL: produto.mercadolivre.com.br/MLB-{id}
+function itemLink(id,nm){
+  const url=`https://produto.mercadolivre.com.br/MLB-${id}`;
+  return`<a class="item-link" href="${url}" target="_blank" title="Abrir anúncio MLB${id}">${nm}</a>`;
+}
+function fmtItemId(id){return`MLB${id}`;}
+
+const charts={};
+function mkChart(id,type,data,opts,plugins){charts[id]?.destroy();charts[id]=new Chart(document.getElementById(id),{type,data,options:{responsive:true,maintainAspectRatio:false,...opts},plugins});}
+
+/* ═══════ DATE FILTER ═══════ */
+const PRESETS=[
+  {k:'today',       l:'Hoje',             ms:[3]},
+  {k:'yesterday',   l:'Ontem',            ms:[2]},
+  {k:'last30',      l:'Últimos 30 dias',  ms:[3]},
+  {k:'last90',      l:'Últimos 90 dias',  ms:[1,2,3]},
+  {k:'cur_week',    l:'Semana atual',     ms:[3]},
+  {k:'cur_month',   l:'Mês atual',        ms:[3]},
+  {k:'cur_quarter', l:'Tri atual (Q2)',   ms:[3]},
+  {k:'cur_year',    l:'Ano atual',        ms:[0,1,2,3]},
+  {k:'prev_week',   l:'Semana anterior',  ms:[2]},
+  {k:'prev_month',  l:'Mês anterior',     ms:[2]},
+  {k:'prev_quarter',l:'Tri anterior (Q1)',ms:[0,1,2]},
+  {k:'prev_year',   l:'Ano anterior',     ms:[0,1,2,3],use25:true},
+  {k:'ytd',         l:'YTD',              ms:[0,1,2,3]},
+  {k:'custom',      l:'Personalizado',    ms:null},
+];
+const PRESET_RANGES={
+  today:'16 Abr 2026',yesterday:'15 Abr 2026',last30:'17 Mar – 16 Abr 2026',
+  last90:'16 Jan – 16 Abr 2026',cur_week:'14 – 16 Abr 2026',cur_month:'1 – 16 Abr 2026',
+  cur_quarter:'1 Abr 2026',cur_year:'1 Jan – 16 Abr 2026',prev_week:'7 – 13 Abr 2026',
+  prev_month:'1 – 31 Mar 2026',prev_quarter:'1 Jan – 31 Mar 2026',
+  prev_year:'1 Jan – 31 Dez 2025',ytd:'1 Jan – 16 Abr 2026',custom:'Personalizado',
+};
+
+const FS={preset:'ytd',ms:[0,1,2,3],use25:false,sellers:new Set(S.map(s=>s.n))};
+
+function toggleDP(){document.getElementById('datePanel').classList.toggle('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.date-sel'))document.getElementById('datePanel').classList.remove('open');});
+
+function buildPresets(){
+  const g=document.getElementById('presetGrid');
+  PRESETS.forEach(p=>{
+    const b=document.createElement('div');b.className='preset-opt'+(p.k===FS.preset?' on':'');b.textContent=p.l;
+    b.onclick=()=>{
+      FS.preset=p.k;FS.ms=p.ms||[0,1,2,3];FS.use25=p.use25||false;
+      document.querySelectorAll('.preset-opt').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+      document.getElementById('dpLabel').textContent=p.l;
+      document.getElementById('dpRange').textContent=PRESET_RANGES[p.k]||'';
+      document.getElementById('datePanel').classList.remove('open');
+    };g.appendChild(b);
+  });
+}
+
+function applyCustomDate(){
+  const s=document.getElementById('dtStart').value;
+  const e=document.getElementById('dtEnd').value;
+  const monthMap=[[2026,0,'Jan'],[2026,1,'Fev'],[2026,2,'Mar'],[2026,3,'Abr']];
+  const sd=new Date(s),ed=new Date(e);
+  FS.ms=monthMap.filter(([y,m])=>{const d=new Date(y,m,1);return d>=sd&&d<=ed;}).map(x=>x[1]);
+  if(FS.ms.length===0)FS.ms=[3];
+  FS.preset='custom';FS.use25=false;
+  document.getElementById('dpLabel').textContent='Personalizado';
+  document.getElementById('dpRange').textContent=`${s} – ${e}`;
+  document.getElementById('datePanel').classList.remove('open');
+  document.querySelectorAll('.preset-opt').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.preset-opt:last-child')?.classList.add('on');
+}
+
+/* ═══════ SELLER FILTER ═══════ */
+function buildSelChips(){
+  const c=document.getElementById('sChips');
+  S.forEach(s=>{
+    const el=document.createElement('div');el.className='schip on';el.textContent=s.n;
+    el.onclick=()=>{el.classList.toggle('on');FS.sellers.has(s.n)?FS.sellers.delete(s.n):FS.sellers.add(s.n);};
+    c.appendChild(el);
+  });
+}
+function selAll(){document.querySelectorAll('#sChips .schip').forEach(c=>{c.classList.add('on');FS.sellers.add(c.textContent);});}
+function clrSel(){document.querySelectorAll('#sChips .schip').forEach(c=>{c.classList.remove('on');});FS.sellers.clear();}
+function applyAll(){render();}
+
+/* ═══════ RENDER ═══════ */
+function getD(){
+  const ms=FS.ms.slice().sort();
+  const ss=S.filter(s=>FS.sellers.has(s.n));
+  const cur=ms[ms.length-1];
+  const prev=ms.length>1?ms[ms.length-2]:cur>0?cur-1:null;
+  const gmvKey=FS.use25?'gmv25':'gmv';
+  const ordKey=FS.use25?'ord25':'ord';
+  return{ms,ss,cur,prev,gmvKey,ordKey};
+}
+
+function render(){
+  const{ms,ss,cur,prev,gmvKey,ordKey}=getD();
+  // Tab 1: apenas carteira (GMV, Orders, Sellers, Logística, Itens)
+  genInsights(ss,ms,cur,prev,'insList');
+  renderKpis(ss,ms,cur,prev,gmvKey,ordKey);
+  renderVendas(ss,ms,cur,prev,gmvKey);
+  renderSellerTable(ss,cur,prev,gmvKey,ordKey);
+  renderLogistics(ss);
+  renderPayment(ss);
+  renderItems();
+  renderClips(ss,ms,cur);
+  renderReputacao(ss,ms,cur);
+  renderSectionInsights(ss,ms,cur,prev);
+  renderAlerts(ss,cur,prev,gmvKey);
+  renderRecs(ss,cur,prev);
+  // Re-render Tab 2 se já aberto
+  if(t2done) renderTab2();
+}
+
+/* ═══ INSIGHTS ═══ */
+function genInsights(ss,ms,cur,prev,lid){
+  const ins=[];
+  // Insights usam soma do período completo
+  const tg=ss.reduce((a,s)=>a+ms.reduce((b,mi)=>b+(s.gmv[mi]||0),0),0);
+  const tg_cur=ss.reduce((a,s)=>a+(s.gmv[cur]||0),0);
+  const tg_p=prev!=null?ss.reduce((a,s)=>a+(s.gmv[prev]||0),0):null;
+  if(tg_p){const adj=mtdAdj(tg_p,prev,cur);const d=((tg_cur-adj)/adj*100).toFixed(1);ins.push({t:`GMV ${+d>0?'cresceu':'caiu'} ${Math.abs(d)}% MoM (${MN[cur]} vs ${MN[prev]})`,c:+d>0?'g':'r'});}
+  const rg=ss.filter(s=>s.bpc[cur]!==null&&s.bpc[cur]<80).reduce((a,s)=>a+ms.reduce((b,mi)=>b+(s.gmv[mi]||0),0),0);
+  ins.push({t:`${(rg/tg*100).toFixed(0)}% do GMV está em sellers com BPC abaixo da meta`,c:'r'});
+  const worst=[...ss].filter(s=>s.bpc[cur]!==null).sort((a,b)=>a.bpc[cur]-b.bpc[cur])[0];
+  if(worst)ins.push({t:`${worst.n} é o principal risco de BPC (${worst.bpc[cur].toFixed(1)}%)`,c:'r'});
+  const worstIt=BPC_OFF.sort((a,b)=>a.bpc_i[cur]-b.bpc_i[cur])[0];
+  if(worstIt)ins.push({t:`${worstIt.nm} é o maior ofensor de competitividade do período`,c:'r'});
+  const piora=BPC_OFF.filter(o=>o.bpc_i[3]!==null&&o.bpc_i[0]!==null&&o.bpc_i[3]<o.bpc_i[0]).slice(0,1)[0];
+  if(piora)ins.push({t:`${piora.nm} apresenta piora contínua de BPC (${(piora.bpc_i[0]*100).toFixed(0)}% → ${(piora.bpc_i[3]*100).toFixed(0)}%)`,c:'y'});
+  const top3=([...ss].filter(s=>s.gmv[cur]).sort((a,b)=>(b.gmv[cur]||0)-(a.gmv[cur]||0)).slice(0,3).reduce((a,s)=>a+(s.gmv[cur]||0),0)/tg*100).toFixed(0);
+  ins.push({t:`Top 3 sellers concentram ${top3}% do GMV`,c:'y'});
+  document.getElementById(lid).innerHTML=ins.map(i=>`<div class="ins ${i.c}">● ${i.t}</div>`).join('');
+}
+
+/* ═══ KPIS ═══ */
+function renderKpis(ss,ms,cur,prev,gk,ok){
+  // KPI value = SOMA de todos os meses selecionados (YTD, trimestre, etc.)
+  const sumMs=(arr,key)=>ss.reduce((a,s)=>a+ms.reduce((b,mi)=>b+(s[key][mi]||0),0),0);
+  const tg    = sumMs(ss,'gmv');
+  const tg25  = sumMs(ss,'gmv25');
+  const to    = sumMs(ss,'ord');
+  const to25  = sumMs(ss,'ord25');
+  const tk    = to>0?tg/to:null;
+
+  // MoM: sempre compara o ÚLTIMO mês selecionado vs mês anterior (MTD ajustado)
+  const tg_cur  = ss.reduce((a,s)=>a+(s.gmv[cur]||0),0);
+  const tg_p    = prev!=null?ss.reduce((a,s)=>a+(s.gmv[prev]||0),0):null;
+  const to_cur  = ss.reduce((a,s)=>a+(s.ord[cur]||0),0);
+  const to_p    = prev!=null?ss.reduce((a,s)=>a+(s.ord[prev]||0),0):null;
+  const tk_cur  = to_cur>0?tg_cur/to_cur:null;
+  const tk_p    = to_p&&to_p>0?tg_p/to_p:null;
+
+  // Label do período selecionado (ex: "YTD Jan–Abr" ou "Abr 2026")
+  const perLabel=ms.length>1?`${MN[ms[0]]}–${MN[ms[ms.length-1]]} 2026`:`${MN[cur]} 2026`;
+
+  const set=(i,val,mm,yy,cls,note)=>{
+    document.getElementById('kv'+i).textContent=val;
+    const el=document.getElementById('kd'+i);
+    el.innerHTML=
+      (note?`<div style="font-size:9px;color:#aaa;margin-bottom:3px">${note}</div>`:'')+
+      (mm!=null?`<span class="d ${dc(+mm)}">MoM ${fmtP(+mm)}</span>`:'')+
+      (yy!=null?`<span class="d ${dc(+yy)}">YoY ${fmtP(+yy)}</span>`:'');
+    document.querySelectorAll('#s-kpi .kpi')[i].className=`kpi ${cls}`;
+  };
+
+  set(0,fmtM(tg),momMTD(tg_cur,tg_p,prev,cur),mom(tg,tg25),tg_p&&tg_cur>mtdAdj(tg_p,prev,cur)?'g':'r',perLabel);
+  set(1,to.toLocaleString('pt-BR'),momMTD(to_cur,to_p,prev,cur),mom(to,to25),'b',perLabel);
+  set(2,fmtR(tk),tk_p?momMTD(tk_cur,tk_p,prev,cur):null,null,'b',`último mês: ${MN[cur]}`);
+}
+
+/* ═══ VENDAS ═══ */
+function renderVendas(ss,ms,cur,prev,gk){
+
+  function execChart(canvasId, byMonth, byMonth25, unitLabel, fmtVal){
+    // MoM por posição (com ajuste MTD para o mês corrente)
+    const momArr=ms.map((mi,idx)=>{
+      if(idx===0)return null;
+      const c=byMonth[idx], pRaw=byMonth[idx-1];
+      const pAdj=mtdAdj(pRaw,ms[idx-1],mi);
+      return pAdj&&pAdj>0?Math.round(((c-pAdj)/pAdj)*100):null;
+    });
+    // YoY por posição
+    const yoyArr=ms.map((mi,idx)=>{
+      const c=byMonth[idx], p25=byMonth25[idx];
+      return p25&&p25>0?Math.round(((c-p25)/p25)*100):null;
+    });
+
+    // Cores: mês atual azul forte, demais azul claro
+    const barCols=ms.map(mi=>mi===cur?B:'#B8CCEB');
+
+    // X labels: mês atual recebe tag "(MTD)"
+    const xLabels=ms.map(mi=>mi===cur?[MN[mi],'(MTD)']:MN[mi]);
+
+    // Plugin de multi-label acima de cada barra
+    const mlPlug={
+      id:'ml_'+canvasId,
+      afterDraw(chart){
+        const{ctx}=chart;
+        const meta=chart.getDatasetMeta(0);
+        meta.data.forEach((bar,i)=>{
+          const raw=chart.data.datasets[0].data[i];
+          if(!raw)return;
+          const isCur=ms[i]===cur;
+          const mom=momArr[i];
+          const yoy=yoyArr[i];
+          let y=bar.y-5;
+
+          // Valor principal
+          ctx.save();
+          ctx.font=`${isCur?'900':'700'} 11px Inter,sans-serif`;
+          ctx.fillStyle=isCur?B:'#333';
+          ctx.textAlign='center';
+          ctx.fillText(fmtVal(raw), bar.x, y);
+          ctx.restore();
+          y-=14;
+
+          // MoM
+          if(mom!=null){
+            const arrow=mom>0?'▲':'▼';
+            ctx.save();
+            ctx.font='700 9px Inter,sans-serif';
+            ctx.fillStyle=mom>0?G:R;
+            ctx.textAlign='center';
+            ctx.fillText(`${arrow} ${Math.abs(mom)}% MoM`, bar.x, y);
+            ctx.restore();
+            y-=12;
+          }
+
+          // YoY
+          if(yoy!=null){
+            const arrow=yoy>0?'▲':'▼';
+            ctx.save();
+            ctx.font='500 8px Inter,sans-serif';
+            ctx.fillStyle='#999';
+            ctx.textAlign='center';
+            ctx.fillText(`${arrow} ${Math.abs(yoy)}% YoY`, bar.x, y);
+            ctx.restore();
+          }
+        });
+      }
+    };
+
+    charts[canvasId]?.destroy();
+    charts[canvasId]=new Chart(document.getElementById(canvasId),{
+      type:'bar',
+      data:{
+        labels:xLabels,
+        datasets:[{
+          label:unitLabel,
+          data:byMonth.map(v=>Math.round(v/1000)),
+          backgroundColor:barCols,
+          borderRadius:8,
+          borderSkipped:false,
+          borderWidth:0,
+        }]
+      },
+      plugins:[mlPlug],
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        layout:{padding:{top:62,left:6,right:6}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              title:items=>`${Array.isArray(xLabels[items[0].dataIndex])?xLabels[items[0].dataIndex].join(' '):xLabels[items[0].dataIndex]}`,
+              afterLabel:c=>{
+                const lines=[];
+                if(momArr[c.dataIndex]!=null)lines.push(`MoM: ${momArr[c.dataIndex]>0?'+':''}${momArr[c.dataIndex]}% vs ${MN[ms[c.dataIndex-1]]||'—'}`);
+                if(yoyArr[c.dataIndex]!=null)lines.push(`YoY: ${yoyArr[c.dataIndex]>0?'+':''}${yoyArr[c.dataIndex]}% vs ${MN[ms[c.dataIndex]]}/2025`);
+                return lines;
+              }
+            }
+          }
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#555',font:{size:11,weight:'600'}}},
+          y:{ticks:{callback:v=>fmtMInt(v*1000),color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}
+        }
+      }
+    });
+  }
+
+  const gmvByM  =ms.map(mi=>ss.reduce((a,s)=>a+(s.gmv[mi]||0),0));
+  const gmvByM25=ms.map(mi=>ss.reduce((a,s)=>a+(s.gmv25[mi]||0),0));
+  execChart('cGmvBar',gmvByM,gmvByM25,'GMV',v=>fmtMInt(v*1000));
+
+  const ordByM  =ms.map(mi=>ss.reduce((a,s)=>a+(s.ord[mi]||0),0));
+  const ordByM25=ms.map(mi=>ss.reduce((a,s)=>a+(s.ord25[mi]||0),0));
+  execChart('cGmvMom',ordByM,ordByM25,'Orders',v=>{
+    const n=v*1000;return n>=1000?Math.round(n/1000)+'K':Math.round(n).toLocaleString('pt-BR');
+  });
+}
+
+/* ═══ MATRIX ═══ */
+function renderMatrix(ss,cur){
+  const valid=ss.filter(s=>s.bpc[cur]!=null&&s.gmv[cur]!=null);
+  const gmvs=valid.map(s=>s.gmv[cur]).sort((a,b)=>a-b);
+  const med=gmvs[Math.floor(gmvs.length/2)]||500000;
+  const qGmv=[0,0,0,0];
+  valid.forEach(s=>{const b=s.bpc[cur],g=s.gmv[cur],hi=g>=med,ok=b>=80;if(hi&&ok)qGmv[0]+=g;else if(hi&&!ok)qGmv[1]+=g;else if(!hi&&ok)qGmv[2]+=g;else qGmv[3]+=g;});
+  const qt=qGmv.reduce((a,b)=>a+b,0);
+  const qDefs=[{lbl:'Risco',v:qGmv[1],c:R,d:'Alto GMV · BPC < 80%'},{lbl:'Escalar',v:qGmv[0],c:G,d:'Alto GMV · BPC ≥ 80%'},{lbl:'Oportunidade',v:qGmv[2],c:Y,d:'Baixo GMV · BPC ≥ 80%'},{lbl:'Desenvolver',v:qGmv[3],c:GR,d:'Baixo GMV · BPC < 80%'}];
+  const rp=(qGmv[1]/qt*100).toFixed(0);
+  document.getElementById('quadPanel').innerHTML=`
+    <div><div style="font-size:12px;font-weight:700;color:${NV};margin-bottom:12px">Distribuição do GMV por Zona</div>
+    <div style="background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.2);border-radius:10px;padding:14px 16px;margin-bottom:12px">
+      <div style="font-size:9px;font-weight:700;color:${R};text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">⚠ GMV em Risco</div>
+      <div style="font-size:32px;font-weight:900;color:${R};letter-spacing:-1.5px;line-height:1">${rp}%</div>
+      <div style="font-size:11px;color:#555;margin-top:2px">${fmtM(qGmv[1])} com BPC abaixo de 80%</div>
+    </div></div>
+    <div>
+      <div style="display:flex;height:8px;border-radius:5px;overflow:hidden;margin-bottom:12px">${qDefs.map(q=>`<div style="width:${(q.v/qt*100).toFixed(1)}%;background:${q.c}" title="${q.lbl}: ${fmtM(q.v)}"></div>`).join('')}</div>
+      ${qDefs.map(q=>`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:${q.c};flex-shrink:0"></div>
+          <div><div style="font-size:12px;font-weight:700;color:${NV}">${q.lbl}</div><div style="font-size:10px;color:#aaa">${q.d}</div></div></div>
+        <div style="text-align:right"><div style="font-size:12px;font-weight:800;color:${NV}">${fmtM(q.v)}</div><div style="font-size:10px;color:#aaa">${(q.v/qt*100).toFixed(0)}%</div></div>
+      </div>`).join('')}
+    </div>`;
+  const qP={id:'qp',beforeDraw(ch){const{ctx,chartArea:{top,bottom,left,right},scales:{x,y}}=ch;const xC=x.getPixelForValue(80),yC=y.getPixelForValue(med/1000);[{x1:left,y1:top,x2:xC,y2:yC,bg:'rgba(230,57,70,.05)',lb:'RISCO',tx:left+8,ty:top+14,lc:'rgba(230,57,70,.5)'},{x1:xC,y1:top,x2:right,y2:yC,bg:'rgba(0,166,80,.05)',lb:'ESCALAR',tx:xC+8,ty:top+14,lc:'rgba(0,166,80,.5)'},{x1:left,y1:yC,x2:xC,y2:bottom,bg:'rgba(0,0,0,.02)',lb:'DESENVOLVER',tx:left+8,ty:yC+14,lc:'rgba(0,0,0,.2)'},{x1:xC,y1:yC,x2:right,y2:bottom,bg:'rgba(245,168,0,.05)',lb:'OPORTUNIDADE',tx:xC+8,ty:yC+14,lc:'rgba(180,120,0,.5)'}].forEach(({x1,y1,x2,y2,bg,lb,tx,ty,lc})=>{ctx.fillStyle=bg;ctx.fillRect(x1,y1,x2-x1,y2-y1);ctx.fillStyle=lc;ctx.font='700 9px Inter,sans-serif';ctx.fillText(lb,tx,ty);});ctx.save();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xC,top);ctx.lineTo(xC,bottom);ctx.stroke();ctx.beginPath();ctx.moveTo(left,yC);ctx.lineTo(right,yC);ctx.stroke();ctx.restore();}};
+  const lP={id:'lp',afterDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,i)=>{if(!ds._l)return;const el=ch.getDatasetMeta(i).data[0];if(!el)return;const r=el.options.radius||6;ctx.save();ctx.font='600 10px Inter,sans-serif';ctx.fillStyle=ds.borderColor;ctx.textAlign='left';ctx.fillText(ds._l,el.x+r+4,el.y+4);ctx.restore();});}};
+  const ds=valid.map(s=>{const b=s.bpc[cur],g=s.gmv[cur],hi=g>=med,ok=b>=80;const col=hi&&ok?G:hi&&!ok?R:!hi&&ok?Y:GR;const big=g>200000;return{label:s.n,_l:big?s.n:null,data:[{x:b,y:g/1000,r:Math.max(5,Math.sqrt(g/1000)/2.8)}],backgroundColor:col+(big?'cc':'44'),borderColor:big?col:'#ddd',borderWidth:big?2:1};});
+  charts['cMatrix']?.destroy();
+  charts['cMatrix']=new Chart(document.getElementById('cMatrix'),{type:'bubble',data:{datasets:ds},plugins:[qP,lP],options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: BPC ${c.parsed.x.toFixed(1)}% · GMV ${fmtM(c.parsed.y*1000)}`}}},scales:{x:{min:25,max:110,title:{display:true,text:'BPC %',font:{size:9},color:'#aaa'},ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},y:{min:0,max:Math.max(...gmvs)/1000*1.15,title:{display:true,text:'GMV (R$ mil)',font:{size:9},color:'#aaa'},ticks:{callback:v=>'R$'+v+'K',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+}
+
+/* ═══ BPC TREND ═══ */
+function renderBpcTrend(ss,ms){
+  const HL={'EMCOMPRE':{c:R},'ZEBRANDS':{c:'#F39C12'},'LUCAS-HOME':{c:'#E67E22'},'ZIDI':{c:G}};
+  // Sem plugin de end-label — usar legenda padrão para mostrar TODOS os sellers
+  const ds=[
+    {label:'Meta 80%',data:ms.map(()=>80),borderColor:'rgba(0,0,0,.2)',borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false,tension:0,order:20},
+    ...ss.map(s=>{
+      const h=HL[s.n];
+      return{
+        label:s.n,
+        data:ms.map(mi=>s.bpc[mi]),
+        borderColor:h?h.c:'#C0C0C0',
+        borderWidth:h?2.5:1.5,
+        pointRadius:h?5:2,
+        pointBackgroundColor:h?h.c:'#C0C0C0',
+        tension:0.3,fill:false,spanGaps:true,order:h?1:10
+      };
+    })
+  ];
+  charts['cBpcTrend']?.destroy();
+  charts['cBpcTrend']=new Chart(document.getElementById('cBpcTrend'),{type:'line',data:{labels:ms.map(i=>MN[i]),datasets:ds},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'bottom',labels:{font:{size:9},boxWidth:9,padding:8,filter:i=>i.text!=='Meta 80%'}},
+      tooltip:{filter:i=>i.dataset.label!=='Meta 80%',callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(1)}%`}}
+    },
+    scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:25,max:108,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F8F8F8'},border:{dash:[4,4]}}}}});
+}
+
+/* ═══ SELLER TABLE ═══ */
+function renderSellerTable(ss,cur,prev,gk,ok){
+  function classify(s){
+    const g=s.gmv[cur],g_p=prev!=null?s.gmv[prev]:null;
+    const gAdj=g_p?mtdAdj(g_p,prev,cur):null;
+    const delta=gAdj?(g-gAdj)/gAdj:null;
+    if(delta!=null&&delta>0.15)return{lbl:'Crescimento',cls:'bg'};
+    if(delta!=null&&delta<-0.15)return{lbl:'Queda',cls:'br'};
+    if(delta!=null&&delta<-0.05)return{lbl:'Atenção',cls:'by'};
+    return{lbl:'Estável',cls:'bb'};
+  }
+  const tbl=document.getElementById('tblSellers');
+  tbl.innerHTML=`<thead><tr><th>Seller</th><th>Cust ID</th><th>Segmento</th><th>GMV</th><th>Orders</th><th>Ticket</th><th>BPC</th><th>GMV MoM</th><th>GMV YoY</th><th>Status</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  [...ss].filter(s=>s.gmv[cur]).sort((a,b)=>(b.gmv[cur]||0)-(a.gmv[cur]||0)).forEach(s=>{
+    const g=s.gmv[cur],g_p=prev!=null?s.gmv[prev]:null,g25=s.gmv25[cur];
+    const o=s.ord[cur],tk=o>0?g/o:null;
+    const b=s.bpc[cur];
+    const mm=momMTD(g,g_p,prev,cur),yy=mom(g,g25);
+    const cl=classify(s);
+    tb.innerHTML+=`<tr>
+      <td><strong>${s.n}</strong></td>
+      <td style="font-size:11px;color:var(--gr);font-family:monospace">${s.cid}</td>
+      <td style="font-size:11px;color:var(--gr)">${s.seg}</td>
+      <td><strong>${fmtM(g)}</strong></td>
+      <td>${o?.toLocaleString('pt-BR')||'—'}</td>
+      <td>${fmtR(tk)}</td>
+      <td><span class="bpc-dot" style="background:${b>=80?G:b>=70?Y:R}"></span>${b!=null?b.toFixed(1)+'%':'—'}</td>
+      <td><span class="d ${dc(+mm)}">${mm?fmtP(+mm):'—'}</span></td>
+      <td><span class="d ${dc(+yy)}">${yy?fmtP(+yy):'—'}</span></td>
+      <td><span class="badge ${cl.cls}">${cl.lbl}</span></td>
+    </tr>`;
+  });
+  tbl.appendChild(tb);
+}
+
+/* ═══ LOGISTICS ═══ */
+function renderLogistics(ss){
+  // Tipos reais: FBM=Fulfillment MELI, XD=Cross-Docking, Otro=Outro, FLEX=Flex
+  const LOGS=['FBM','XD','Otro','FLEX'];
+  const LOGCOLS=[G,B,Y,GR];
+  const LOGLBLS=['FBM (Full)','XD (Cross-Docking)','Otro','FLEX'];
+  const t={FBM:0,XD:0,Otro:0,FLEX:0};
+  ss.forEach(s=>LOGS.forEach(k=>t[k]+=(s.log[k]||0)));
+  const tot=Object.values(t).reduce((a,b)=>a+b,0);
+  charts['cLogD']?.destroy();
+  charts['cLogD']=new Chart(document.getElementById('cLogD'),{type:'doughnut',data:{labels:LOGLBLS,datasets:[{data:LOGS.map(k=>Math.round(t[k]/tot*100)),backgroundColor:LOGCOLS,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}}});
+  const top6=[...ss].sort((a,b)=>(b.gmv[3]||0)-(a.gmv[3]||0)).slice(0,6);
+  charts['cLogS']?.destroy();
+  charts['cLogS']=new Chart(document.getElementById('cLogS'),{type:'bar',data:{labels:top6.map(s=>s.n),datasets:[
+    {label:'FBM',  data:top6.map(s=>s.log.FBM||0), backgroundColor:G+'bb',stack:'s',borderRadius:4},
+    {label:'XD',   data:top6.map(s=>s.log.XD||0),  backgroundColor:B+'bb',stack:'s'},
+    {label:'Otro', data:top6.map(s=>s.log.Otro||0), backgroundColor:Y+'bb',stack:'s'},
+    {label:'FLEX', data:top6.map(s=>s.log.FLEX||0), backgroundColor:GR+'bb',stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:8}}},scales:{x:{grid:{display:false},ticks:{color:'#aaa',font:{size:9}}},y:{ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+}
+
+/* ═══ CLIPS ═══ */
+function renderClips(ss,ms,cur){
+  const selCids=new Set(ss.map(s=>s.cid));
+  const filtered=CLIPS_DATA.filter(d=>selCids.has(d.cid));
+
+  // Busca GMV real do seller no mês (para calcular % cobertura)
+  function sellerGmv(cid,mi){const s=S.find(x=>x.cid===cid);return s?s.gmv[mi]||null:null;}
+
+  // Cobertura % = gmv_clips / gmv_real
+  function covPct(d,mi){
+    const real=sellerGmv(d.cid,mi);
+    return real&&d.gmv_clips[mi]?+(d.gmv_clips[mi]/real*100).toFixed(1):null;
+  }
+  function vipPct(d,mi){
+    const real=sellerGmv(d.cid,mi);
+    return real&&d.vip[mi]?+(d.vip[mi]/real*100).toFixed(1):null;
+  }
+  function pdpPct(d,mi){
+    const real=sellerGmv(d.cid,mi);
+    return real&&d.pdp[mi]?+(d.pdp[mi]/real*100).toFixed(1):null;
+  }
+
+  const NIVEL_COLORS={'Platinum':'#00A650','Gold':'#FFB800',null:'#E0E0E0'};
+
+  // Tabela
+  const tbl=document.getElementById('tblClips');
+  tbl.innerHTML=`<thead><tr>
+    <th>Seller</th><th>Solução</th><th>Nível</th>
+    ${ms.map(mi=>`<th>Cob. ${MN[mi]}</th>`).join('')}
+    <th>VIP (${MN[cur]})</th><th>PDP (${MN[cur]})</th><th>GMV CLIPs (${MN[cur]})</th>
+  </tr></thead>`;
+  const tb=document.createElement('tbody');
+  [...filtered].sort((a,b)=>(covPct(b,cur)||0)-(covPct(a,cur)||0)).forEach(d=>{
+    const cv=covPct(d,cur);
+    const nivel=d.nivel;
+    const nColor=NIVEL_COLORS[nivel]||'#aaa';
+    const trendCells=ms.map(mi=>{
+      const p=covPct(d,mi);
+      return`<td style="font-weight:700;color:${p>20?'var(--g)':p>10?'var(--y)':p!=null?'var(--r)':'#ccc'}">${p!=null?p+'%':'—'}</td>`;
+    }).join('');
+    tb.innerHTML+=`<tr>
+      <td><strong>${d.n}</strong></td>
+      <td style="font-size:11px">${d.sol||'<span style="color:#aaa">sem solução</span>'}</td>
+      <td><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${nColor};color:${nivel==='Gold'?'#333':'#fff'}">${nivel||'—'}</span></td>
+      ${trendCells}
+      <td style="font-size:11px;color:var(--b)">${vipPct(d,cur)!=null?vipPct(d,cur)+'%':'—'}</td>
+      <td style="font-size:11px;color:var(--b);opacity:.6">${pdpPct(d,cur)!=null?pdpPct(d,cur)+'%':'—'}</td>
+      <td><strong>${fmtM(d.gmv_clips[cur])}</strong></td>
+    </tr>`;
+  });
+  tbl.appendChild(tb);
+
+  // Gráfico barras horizontais empilhadas (VIP + PDP %)
+  const chartData=filtered.map(d=>({
+    n:d.n,
+    vip:vipPct(d,cur)||0,
+    pdp:pdpPct(d,cur)||0,
+  })).sort((a,b)=>(b.vip+b.pdp)-(a.vip+a.pdp));
+
+  charts['cClips']?.destroy();
+  charts['cClips']=new Chart(document.getElementById('cClips'),{type:'bar',data:{
+    labels:chartData.map(d=>d.n),
+    datasets:[
+      {label:'VIP %',  data:chartData.map(d=>d.vip), backgroundColor:B+'cc',stack:'s',borderRadius:4},
+      {label:'PDP %',  data:chartData.map(d=>d.pdp), backgroundColor:B+'55',stack:'s'},
+    ]
+  },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}
+    },
+    scales:{
+      x:{min:0,max:25,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},
+      y:{grid:{display:false},ticks:{color:'#555',font:{size:10}}}
+    }
+  }});
+
+  // Section insights
+  const noSol=filtered.filter(d=>!d.sol);
+  const highCov=filtered.filter(d=>(covPct(d,cur)||0)>18);
+  const lowCov=filtered.filter(d=>{const p=covPct(d,cur);return p!=null&&p<10;});
+  const falling=filtered.filter(d=>{const c=covPct(d,cur),p=cur>0?covPct(d,cur-1):null;return c!=null&&p!=null&&c<p-2;});
+
+  si('si-clips',
+    [highCov.length?`${highCov.map(d=>d.n).join(', ')} com cobertura CLIP > 18%`:null,
+     `${filtered.filter(d=>d.nivel==='Platinum').length} sellers com solução Platinum ativa`].filter(Boolean),
+    [noSol.length?`${noSol.map(d=>d.n).join(', ')} sem solução vinculada — cobertura pode ser otimizada`:null,
+     lowCov.length?`${lowCov.map(d=>d.n).join(', ')} com cobertura < 10% em ${MN[cur]}`:null,
+     falling.length?`${falling.map(d=>d.n).join(', ')} com cobertura caindo MoM`:null].filter(Boolean),
+    [noSol.length?`Avaliar vinculação de solução para ${noSol.slice(0,2).map(d=>d.n).join(', ')}`:null,
+     lowCov.length?`Revisar estratégia de CLIPs para aumentar cobertura PDP em ${lowCov[0]?.n}`:null].filter(Boolean)
+  );
+}
+
+/* ═══ REPUTAÇÃO ═══ */
+function renderReputacao(ss, ms, cur){
+  const selCids=new Set(ss.map(s=>s.cid));
+  const filtered=REP_DATA.filter(d=>selCids.has(d.cid));
+
+  // Calcular % cancelamento no mês atual e anterior
+  function cancelRate(d, mi){
+    const c=d.cancel[mi],o=d.orders[mi];
+    return(c!=null&&o&&o>0)?+(c/o*100).toFixed(1):null;
+  }
+  const prevMi=cur>0?cur-1:null;
+
+  // Detectar mudança de reputação dentro do histórico disponível
+  function lastChange(d){
+    const hist=d.hist.filter(v=>v!=null);
+    for(let i=hist.length-1;i>0;i--){if(hist[i]!==hist[i-1])return MN[i]+'/'+(2026);}
+    return'Estável Jan–Abr 2026';
+  }
+
+  // Maior threshold atingido
+  function getAlert(rate){
+    if(rate==null)return null;
+    for(let i=REP_THR.length-1;i>=0;i--){if(rate>=REP_THR[i].rate)return REP_THR[i];}
+    return null;
+  }
+
+  const grid=document.getElementById('repGrid');
+  grid.innerHTML=filtered.map(d=>{
+    const cfg=REP_CFG[d.rep]||REP_CFG.green;
+    const rateCur=cancelRate(d,cur);
+    const ratePrev=prevMi!=null?cancelRate(d,prevMi):null;
+    const trend=rateCur!=null&&ratePrev!=null?rateCur-ratePrev:null;
+    const alert=getAlert(rateCur);
+    const cardBorderCol=alert?'var(--r)':cfg.bg;
+    const changeDate=lastChange(d);
+
+    // Verificar se reputação mudou recentemente
+    const repHistory=d.hist.filter(v=>v!=null);
+    const repChanged=repHistory.length>1&&repHistory[repHistory.length-1]!==repHistory[0];
+
+    return`<div class="rep-card" style="border-left-color:${cardBorderCol}">
+      <div class="rep-nm">${d.n} ${d.ml?'<span style="font-size:9px;background:#FFB800;color:#333;padding:1px 6px;border-radius:10px;font-weight:700">ML</span>':''}</div>
+      <div style="font-size:10px;font-family:monospace;color:var(--gr);margin-bottom:6px">${d.cid}</div>
+      <span class="rep-badge" style="background:${cfg.bg};color:${cfg.tc}">${cfg.lbl}</span>
+      ${repChanged?`<span style="font-size:9px;color:var(--r);font-weight:700;margin-left:4px">↕ mudou</span>`:''}
+      <div class="rep-row">
+        <span class="rep-lbl">% Cancelamentos</span>
+        <span class="rep-val" style="color:${rateCur>5?'var(--r)':rateCur>2?'var(--y)':'var(--g)'}">${rateCur!=null?rateCur+'%':'—'}</span>
+      </div>
+      <div class="rep-row">
+        <span class="rep-lbl">Tendência</span>
+        <span class="rep-val" style="color:${trend==null?'#aaa':trend>0?'var(--r)':'var(--g)'}">${trend==null?'—':trend>0?'▲ +'+trend.toFixed(1)+'pp':'▼ '+trend.toFixed(1)+'pp'}</span>
+      </div>
+      <div class="rep-row">
+        <span class="rep-lbl">Histórico rep.</span>
+        <span style="font-size:10px;color:#777">${changeDate}</span>
+      </div>
+      ${alert?`<div class="rep-thr" style="background:rgba(230,57,70,.1);color:var(--r)">⚠ ${alert.msg}</div>`:''}
+    </div>`;
+  }).join('');
+
+  // Section insights reputação
+  const atRisk=filtered.filter(d=>cancelRate(d,cur)>=1);
+  const critical=filtered.filter(d=>cancelRate(d,cur)>=2);
+  const worsening=filtered.filter(d=>{const rc=cancelRate(d,cur),rp=prevMi!=null?cancelRate(d,prevMi):null;return rc!=null&&rp!=null&&rc>rp+0.5;});
+  const improving=filtered.filter(d=>{const rc=cancelRate(d,cur),rp=prevMi!=null?cancelRate(d,prevMi):null;return rc!=null&&rp!=null&&rc<rp-0.5;});
+  const yellowSellers=filtered.filter(d=>d.rep==='yellow');
+
+  si('si-reputacao',
+    [improving.length?`${improving.map(d=>d.n).join(', ')} reduziram cancelamentos MoM`:null,
+     filtered.filter(d=>cancelRate(d,cur)<1).length?`${filtered.filter(d=>cancelRate(d,cur)<1).length} sellers com cancelamento < 1%`:null].filter(Boolean),
+    [yellowSellers.length?`${yellowSellers.map(d=>d.n).join(', ')} em reputação Amarela — risco de degradação`:null,
+     critical.length?`${critical.map(d=>d.n).join(', ')} acima de 2% — risco de cair para Amarelo`:null,
+     worsening.length?`${worsening.map(d=>d.n).join(', ')} com cancelamentos crescendo MoM`:null].filter(Boolean),
+    [`Revisar operação de ${[...yellowSellers,...critical].map(d=>d.n).slice(0,2).join(', ')} para reduzir cancelamentos`,
+     worsening.length?`Investigar causa raiz do aumento em ${worsening[0].n}`:null].filter(Boolean)
+  );
+}
+
+/* ═══ PAYMENT ═══ */
+function renderPayment(ss){
+  const selCids=new Set(ss.map(s=>s.cid));
+  const filtered=PAY_DATA.filter(d=>selCids.has(d.cid));
+
+  // Totais portfolio
+  const tots={};PAY_MET.forEach(m=>tots[m]=filtered.reduce((a,d)=>a+(d[m]||0),0));
+  const grandTotal=PAY_MET.reduce((a,m)=>a+tots[m],0);
+
+  // Donut total
+  charts['cPayTotal']?.destroy();
+  charts['cPayTotal']=new Chart(document.getElementById('cPayTotal'),{type:'doughnut',data:{
+    labels:PAY_MET.map(m=>PAY_LBL[m]),
+    datasets:[{data:PAY_MET.map(m=>Math.round(tots[m])),backgroundColor:PAY_MET.map(m=>PAY_COL[m]),borderWidth:0}]
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+    plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10,padding:8}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${fmtM(c.raw)} (${grandTotal?(c.raw/grandTotal*100).toFixed(1):'0'}%)`}}
+    }
+  }});
+
+  // Stacked bar 100% por seller
+  const selData=filtered.map(d=>{
+    const tot=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);
+    return{nm:d.n,tot,...Object.fromEntries(PAY_MET.map(m=>[m,tot>0?(d[m]||0)/tot*100:0]))};
+  }).sort((a,b)=>b.tot-a.tot); // ordena por GMV total desc
+
+  charts['cPaySeller']?.destroy();
+  charts['cPaySeller']=new Chart(document.getElementById('cPaySeller'),{type:'bar',data:{
+    labels:selData.map(d=>d.nm),
+    datasets:PAY_MET.map(m=>({
+      label:PAY_LBL[m],
+      data:selData.map(d=>+d[m].toFixed(1)),
+      backgroundColor:PAY_COL[m]+'cc',
+      stack:'s',borderWidth:0
+    }))
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:9,padding:6}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(1)}%`}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{color:'#555',font:{size:10}}},
+      y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}
+    }
+  }});
+}
+
+/* ═══ ITEMS ═══ */
+function statusBadge(s){const m={Ativo:{c:'bg'},Pausado:{c:'by'},Finalizado:{c:'br'}};const t=m[s]||{c:'bb'};return`<span class="badge ${t.c}">${s||'—'}</span>`;}
+let itemSortBy='gmv';
+const SORT_OPTS=[
+  {k:'gmv',  l:'GMV'},
+  {k:'units',l:'Units'},
+  {k:'share',l:'Share %'},
+  {k:'price',l:'Preço'},
+  {k:'mom',  l:'MoM'},
+];
+
+function initSortPills(){
+  const c=document.getElementById('sortPills');
+  if(!c||c.children.length)return;
+  SORT_OPTS.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='spill'+(o.k===itemSortBy?' on':'');
+    b.textContent=o.l;
+    b.onclick=()=>{
+      itemSortBy=o.k;
+      document.querySelectorAll('#sortPills .spill').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      renderItems();
+    };
+    c.appendChild(b);
+  });
+}
+
+const IT_HEAD=`<thead><tr>
+  <th>#</th><th>Item ID</th><th>Título</th><th>Status</th><th>Seller</th><th>Cust ID</th><th>Domínio</th>
+  <th>GMV Período</th><th>Share GMV</th><th>Units</th><th>Preço Atual</th><th>GMV MoM</th><th>VC Negativa</th>
+</tr></thead>`;
+
+function itRow(it,gmv,units,price,mm,share,rank){
+  const sharePct=share!=null?share.toFixed(1):null;
+  const shareBar=sharePct?`<div style="display:flex;align-items:center;gap:6px">
+    <div style="width:${Math.min(+sharePct*3,80)}px;height:5px;background:var(--b);border-radius:3px;flex-shrink:0"></div>
+    <span style="font-weight:700;font-size:11px">${sharePct}%</span>
+  </div>`:'—';
+  return`<tr>
+    <td style="font-size:11px;font-weight:800;color:${rank<=3?'var(--b)':'var(--gr)'};text-align:center;min-width:28px">${rank??'—'}</td>
+    <td style="font-size:10px;font-family:monospace;color:var(--gr)">${fmtItemId(it.id)}</td>
+    <td>${itemLink(it.id,it.nm)}</td>
+    <td>${statusBadge(it.status)}</td>
+    <td style="font-size:11px;color:var(--gr)">${it.sel}</td>
+    <td style="font-size:10px;font-family:monospace;color:var(--gr)">${it.cid}</td>
+    <td style="font-size:11px;color:var(--gr)">${it.domain}</td>
+    <td><strong>${fmtM(gmv)}</strong></td>
+    <td>${shareBar}</td>
+    <td>${units!=null?units.toLocaleString('pt-BR'):'—'}</td>
+    <td>${fmtR(price)}</td>
+    <td><span class="d ${dc(+mm)}">${mm!=null?fmtP(+mm):'—'}</span></td>
+    <td>${it.vc_neg?'<span class="badge br">⚠ Sim</span>':'<span class="badge bg">Ok</span>'}</td>
+  </tr>`;
+}
+
+function renderItems(){
+  const{ms,ss,cur,prev}=getD();
+  const selNm=new Set(ss.map(s=>s.n));
+  const filtered=ITEMS.filter(it=>selNm.has(it.sel));
+
+  const itmGmv  =it=>ms.reduce((a,mi)=>a+(it.gmv[mi]||0),0);
+  const itmUnits=it=>ms.reduce((a,mi)=>a+(it.units[mi]||0),0);
+  const itmPrice=it=>{const v=ms.map(mi=>it.p[mi]).filter(v=>v!=null);return v[v.length-1]||null;};
+  const itmMom  =it=>{const c=it.gmv[cur]||0,p=prev!=null?(it.gmv[prev]||0):null;return p!=null?momMTD(c,p,prev,cur):null;};
+
+  const totalItGmv=filtered.reduce((a,it)=>a+itmGmv(it),0);
+  const itmShare=it=>totalItGmv>0?itmGmv(it)/totalItGmv*100:null;
+
+  // Função de valor para ordenação
+  function sortVal(it){
+    switch(itemSortBy){
+      case 'units': return itmUnits(it);
+      case 'share': return itmGmv(it); // proporcional ao GMV
+      case 'price': return itmPrice(it)||0;
+      case 'mom':   return parseFloat(itmMom(it))||0;
+      default:      return itmGmv(it); // 'gmv'
+    }
+  }
+
+  // Gera tabela com ranking #
+  const mk=rows=>{
+    const tbody=rows.map((it,i)=>itRow(it,itmGmv(it),itmUnits(it),itmPrice(it),itmMom(it),itmShare(it),i+1)).join('');
+    return IT_HEAD+'<tbody>'+tbody+'</tbody>';
+  };
+  const firstMi=ms[0];
+
+  // Top Itens: ordenado pelo critério selecionado
+  const top=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sortVal(b)-sortVal(a));
+
+  // Em Queda (ordenação fixa por maior queda relativa)
+  const q=[...filtered]
+    .filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi])
+    .sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
+
+  // Aumento de Preço (ordenação fixa por maior variação de preço)
+  const p=[...filtered]
+    .filter(it=>it.p[cur]&&it.p[firstMi]&&Math.abs((it.p[cur]-it.p[firstMi])/it.p[firstMi])>0.005)
+    .sort((a,b)=>Math.abs((b.p[cur]-b.p[firstMi])/b.p[firstMi])-Math.abs((a.p[cur]-a.p[firstMi])/a.p[firstMi]));
+
+  // VC Negativa (ordenado por GMV)
+  const vc=[...filtered].filter(it=>it.vc_neg).sort((a,b)=>itmGmv(b)-itmGmv(a));
+
+  // Inicializa pills de sort (apenas uma vez)
+  initSortPills();
+
+  document.getElementById('tTop').innerHTML  =mk(top);
+  document.getElementById('tQueda').innerHTML=mk(q);
+  document.getElementById('tPreco').innerHTML=mk(p);
+  document.getElementById('tVc').innerHTML   =mk(vc);
+}
+function showItTab(id,btn){
+  document.querySelectorAll('[id^="it-"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.stb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('it-'+id).style.display='block';
+  btn.classList.add('on');
+}
+
+/* ═══ SECTION INSIGHTS ═══ */
+function si(id,opps,alerts,recs){
+  const el=document.getElementById(id);if(!el)return;
+  const row=(items,cls,title)=>items.length?`<div class="sic ${cls}"><div class="sic-t">${title}</div>${items.map(t=>`<div class="sic-item">● ${t}</div>`).join('')}</div>`:'';
+  el.innerHTML=row(opps,'opp','✅ Oportunidades')+row(alerts,'risk','🚨 Alertas')+row(recs,'rec','→ Recomendação');
+}
+
+function renderSectionInsights(ss,ms,cur,prev){
+  const{ms:_,ss:__,...d}=getD();
+  const gmvCur=ss.reduce((a,s)=>a+(s.gmv[cur]||0),0);
+  const gmvPrev=prev!=null?ss.reduce((a,s)=>a+(s.gmv[prev]||0),0):null;
+
+  // ─ VENDAS ─
+  const sortedByGrowth=[...ss].filter(s=>prev&&s.gmv[cur]&&s.gmv[prev]).map(s=>({n:s.n,d:((s.gmv[cur]-s.gmv[prev])/s.gmv[prev]*100).toFixed(0)})).sort((a,b)=>+b.d- +a.d);
+  const topGrw=sortedByGrowth.filter(s=>+s.d>0)[0];
+  const topFall=sortedByGrowth.filter(s=>+s.d<-10).slice(-1)[0];
+  const momPort=gmvPrev?Math.round((gmvCur-gmvPrev)/gmvPrev*100):null;
+  si('si-vendas',
+    [topGrw?`${topGrw.n} lidera crescimento MoM com +${topGrw.d}%`:null,
+     momPort>0?`GMV total cresceu ${momPort}% vs mês anterior`:null].filter(Boolean),
+    [topFall?`${topFall.n} em queda — GMV caiu ${Math.abs(topFall.d)}% MoM`:null,
+     momPort<0?`GMV total caiu ${Math.abs(momPort)}% MoM — investigar causa`:null].filter(Boolean),
+    [topGrw?`Acelerar campanhas e sortimento de ${topGrw.n}`:null,
+     topFall?`Abrir diagnóstico de ${topFall.n}: sortimento, preço e logística`:null].filter(Boolean)
+  );
+
+  // ─ SELLERS ─
+  function classGmv(s){const g=s.gmv[cur],gp=prev!=null?s.gmv[prev]:null;const adj=gp?mtdAdj(gp,prev,cur):null;const d=adj?(g-adj)/adj:null;if(d>0.15)return'Crescimento';if(d<-0.15)return'Queda';return'Estável';}
+  const cresc=ss.filter(s=>classGmv(s)==='Crescimento');
+  const queda=ss.filter(s=>classGmv(s)==='Queda');
+  si('si-sellers',
+    [cresc.length?`${cresc.map(s=>s.n).join(', ')} em crescimento MoM`:null].filter(Boolean),
+    [queda.length?`${queda.map(s=>s.n).slice(0,3).join(', ')} com queda acima de 15% MoM`:null].filter(Boolean),
+    [cresc.length?`Expandir metas e suporte para ${cresc[0].n}`:null,
+     queda.length?`Revisar posicionamento e mix de ${queda[0].n}`:null].filter(Boolean)
+  );
+
+  // ─ LOGÍSTICA ─
+  const selCids=new Set(ss.map(s=>s.cid));
+  const payF=PAY_DATA.filter(d=>selCids.has(d.cid));
+  const highFBM=ss.filter(s=>(s.log.FBM||0)>=50).map(s=>s.n);
+  const lowFBM=ss.filter(s=>(s.log.FBM||0)<20&&(s.log.Otro||0)>70).map(s=>s.n);
+  si('si-logistica',
+    [highFBM.length?`${highFBM.join(', ')} com alto FBM — melhor SLA e BPC`:null].filter(Boolean),
+    [lowFBM.length?`${lowFBM.slice(0,3).join(', ')} concentrados em Otro — risco de qualidade de entrega`:null].filter(Boolean),
+    [lowFBM.length?`Apresentar proposta de migração para FBM a ${lowFBM[0]}`:null,
+     `Revisar mix logístico dos sellers com menos de 20% FBM`].filter(Boolean)
+  );
+
+  // ─ PAGAMENTOS ─
+  const pixLow=payF.filter(d=>{const t=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);return t>0&&(d.pix||0)/t<0.15;}).map(d=>d.n);
+  const pixHigh=payF.filter(d=>{const t=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);return t>0&&(d.pix||0)/t>=0.25;}).map(d=>d.n);
+  si('si-pagamento',
+    [pixHigh.length?`${pixHigh.join(', ')} com alto PIX (>25%) — menor custo de processamento`:null].filter(Boolean),
+    [pixLow.length?`${pixLow.slice(0,3).join(', ')} com PIX < 15% — oportunidade de redução de custo`:null].filter(Boolean),
+    [`Incentivar PIX nos sellers com menor adoção`,
+     pixLow.length?`Criar campanha focada em ${pixLow[0]}`:null].filter(Boolean)
+  );
+
+  // ─ ITENS ─
+  const itSelNm=new Set(ss.map(s=>s.n));
+  const filt=ITEMS.filter(it=>itSelNm.has(it.sel));
+  const itmGmv=it=>ms.reduce((a,mi)=>a+(it.gmv[mi]||0),0);
+  const itmMomVal=it=>{const c=it.gmv[cur]||0,p=prev!=null?(it.gmv[prev]||0):null;return p!=null?momMTD(c,p,prev,cur):null;};
+  const topIt=[...filt].filter(it=>itmGmv(it)>0).sort((a,b)=>itmGmv(b)-itmGmv(a))[0];
+  const bestMom=[...filt].filter(it=>{const m=itmMomVal(it);return m!=null&&+m>0;}).sort((a,b)=>+(itmMomVal(b)||0)- +(itmMomVal(a)||0))[0];
+  const worstMom=[...filt].filter(it=>{const m=itmMomVal(it);return m!=null&&+m<-20;}).sort((a,b)=>+(itmMomVal(a)||0)- +(itmMomVal(b)||0))[0];
+  const vcNeg=filt.filter(it=>it.vc_neg);
+  si('si-itens',
+    [topIt?`${topIt.nm.slice(0,40)} lidera GMV no período — ${fmtM(itmGmv(topIt))}`:null,
+     bestMom?`${bestMom.nm.slice(0,35)} com maior crescimento MoM`:null].filter(Boolean),
+    [vcNeg.length?`${vcNeg.length} item(ns) com VC Negativa — revisar margem`:null,
+     worstMom?`${worstMom.nm.slice(0,35)} em queda ${itmMomVal(worstMom)}% MoM`:null].filter(Boolean),
+    [vcNeg.length?`Revisar preço e custo de frete dos itens com VC negativa`:null,
+     worstMom?`Investigar sortimento e precificação de ${worstMom.nm.slice(0,30)}`:null].filter(Boolean)
+  );
+}
+
+/* ═══ ALERTS & RECS ═══ */
+function renderAlerts(ss,cur,prev,gk){
+  const opps=[],alerts=[];
+  ss.forEach(s=>{
+    const b=s.bpc[cur],g=s.gmv[cur],g_p=prev!=null?s.gmv[prev]:null;
+    if(b>=80&&g&&g<500000)opps.push({t:`${s.n} — BPC ${b.toFixed(1)}% com GMV potencial de crescimento`,c:G});
+    if(g_p&&g&&(g-g_p)/g_p<-0.2)alerts.push({t:`${s.n} caiu ${(-(g-g_p)/g_p*100).toFixed(0)}% no GMV MoM`,c:R});
+    if(b!=null&&b<65)alerts.push({t:`${s.n} com BPC crítico: ${b.toFixed(1)}% — abaixo de 65%`,c:R});
+  });
+  ITEMS.filter(it=>it.vc_neg).forEach(it=>alerts.push({t:`VC Negativa: ${it.nm} (${it.sel}) — revisar custos`,c:R}));
+  if(!opps.length)opps.push({t:'Nenhuma oportunidade identificada no período',c:GR});
+  if(!alerts.length)alerts.push({t:'Sem alertas críticos no período',c:GR});
+  document.getElementById('oppList').innerHTML=opps.slice(0,5).map(o=>`<div class="aitem"><div class="adot" style="background:${o.c}"></div>${o.t}</div>`).join('');
+  document.getElementById('alertList').innerHTML=alerts.slice(0,6).map(o=>`<div class="aitem"><div class="adot" style="background:${o.c}"></div>${o.t}</div>`).join('');
+}
+function renderRecs(ss,cur,prev){
+  const recs=[];
+  const low=ss.filter(s=>s.bpc[cur]!=null&&s.bpc[cur]<70);
+  if(low.length)recs.push({type:'Preço & Competitividade',txt:`${low.map(s=>s.n).slice(0,2).join(', ')} com BPC < 70% — risco de perda de buybox.`,act:'Revisar precificação vs concorrentes diretos'});
+  const drop=ss.filter(s=>prev&&s.gmv[cur]&&s.gmv[prev]&&(s.gmv[cur]-s.gmv[prev])/s.gmv[prev]<-0.2);
+  if(drop.length)recs.push({type:'Retenção de GMV',txt:`${drop[0].n} com queda de GMV acima de 20% MoM.`,act:'Investigar sortimento, preço e logística'});
+  recs.push({type:'Qualidade de Itens',txt:`${ITEMS.filter(it=>it.vc_neg).length} itens com VC Negativa impactando margem operacional.`,act:'Revisar preço, frete e estrutura de custo por item'});
+  recs.push({type:'Escalar',txt:`Zidi e Sonnus com BPC > 95% — potencial de expansão de sortimento.`,act:'Aumentar sortimento e investimento em campanhas'});
+  document.getElementById('recGrid').innerHTML=recs.map(r=>`<div class="rec"><div class="rec-type">${r.type}</div><div class="rec-txt">${r.txt}</div><div class="rec-act">→ ${r.act}</div></div>`).join('');
+}
+
+/* ═══ TAB 2 ═══ */
+let t2done=false;
+function renderTab2(){
+  const{ms,ss,cur,prev}=getD();
+  const bArr=ss.map(s=>s.bpc[cur]).filter(v=>v!=null);
+  const avg=bArr.length?+(bArr.reduce((a,b)=>a+b,0)/bArr.length).toFixed(1):null;
+  const tg=ss.reduce((a,s)=>a+ms.reduce((b,mi)=>b+(s.gmv[mi]||0),0),0);
+  const rg=ss.filter(s=>s.bpc[cur]!=null&&s.bpc[cur]<80).reduce((a,s)=>a+ms.reduce((b,mi)=>b+(s.gmv[mi]||0),0),0);
+  const onMeta=bArr.filter(v=>v>=80).length;
+  const bArr_p=prev!=null?ss.map(s=>s.bpc[prev]).filter(v=>v!=null):[];
+  const avg_p=bArr_p.length?+(bArr_p.reduce((a,b)=>a+b,0)/bArr_p.length).toFixed(1):null;
+
+  // KPIs BPC
+  document.getElementById('t2k0').textContent=avg!=null?avg+'%':'—';
+  document.getElementById('t2kd0').innerHTML=avg_p?`<span class="d ${dc(+(avg-avg_p).toFixed(1))}">MoM ${fmtP(+(avg-avg_p))}</span>`:'';
+  document.getElementById('t2k1').textContent=tg?(rg/tg*100).toFixed(0)+'%':'—';
+  document.getElementById('t2kd1').innerHTML=`<span style="font-size:10px;color:var(--gr)">${fmtM(rg)} em risco</span>`;
+  document.getElementById('t2k2').textContent=`${onMeta} / ${bArr.length}`;
+  document.getElementById('t2kd2').innerHTML=`<span style="font-size:10px;color:var(--gr)">${bArr.length?(onMeta/bArr.length*100).toFixed(0):'0'}% na meta</span>`;
+
+  genInsights(ss,ms,cur,prev,'insList2');
+
+  // Matriz BPC × GMV (mesma função do Tab 1, agora exclusiva do Tab 2)
+  renderMatrix(ss,cur);
+
+  // BPC Trend (todos os sellers, com legenda)
+  renderBpcTrend(ss,ms);
+
+  // Ranking BPC (barras horizontais)
+  const rankSorted=[...ss].filter(s=>s.bpc[cur]!=null).sort((a,b)=>b.bpc[cur]-a.bpc[cur]);
+  const rl=document.getElementById('bpcRankList');
+  rl.innerHTML=rankSorted.map(s=>{
+    const b=s.bpc[cur];
+    const col=b>=80?G:b>=70?Y:R;
+    const bp=prev!=null?s.bpc[prev]:null;
+    const d=bp!=null?+(b-bp).toFixed(1):null;
+    const ds=d==null?'—':d>0?`▲ +${d}pp`:d<0?`▼ ${d}pp`:`→ 0pp`;
+    const dc2=d==null?'rd-fl':d>0?'rd-up':'rd-dn';
+    return`<div class="rrow">
+      <div class="rnm">${s.n}</div>
+      <div class="rtrack"><div class="rfill" style="width:${b}%;background:${col}"><span>${b.toFixed(1)}%</span></div></div>
+      <div class="rdelta ${dc2}">${ds}</div>
+    </div>`;
+  }).join('');
+
+  // Delta BPC (variação MoM)
+  const delta=ss.filter(s=>prev!=null&&s.bpc[cur]!=null&&s.bpc[prev]!=null).map(s=>({n:s.n,d:+(s.bpc[cur]-s.bpc[prev]).toFixed(1)})).sort((a,b)=>a.d-b.d);
+  charts['cBpcDelta']?.destroy();
+  charts['cBpcDelta']=new Chart(document.getElementById('cBpcDelta'),{type:'bar',data:{labels:delta.map(d=>d.n),datasets:[{data:delta.map(d=>d.d),backgroundColor:delta.map(d=>d.d>=0?G+'bb':R+'bb'),borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x>0?'+':''}${c.parsed.x}pp`}}},scales:{x:{ticks:{callback:v=>`${v>0?'+':''}${v}pp`,color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},y:{grid:{display:false},ticks:{font:{size:10},color:'#555'}}}}});
+  // Heatmap
+  const hmS=[...ss].sort((a,b)=>{const av=a.bpc.filter(v=>v!=null).reduce((s,v)=>s+v,0)/a.bpc.filter(v=>v!=null).length||0;const bv=b.bpc.filter(v=>v!=null).reduce((s,v)=>s+v,0)/b.bpc.filter(v=>v!=null).length||0;return bv-av;});
+  const hm=document.getElementById('hmTable');
+  hm.innerHTML=`<thead><tr><th>Seller</th>${ms.map(i=>`<th>${MN[i]}</th>`).join('')}<th>Var</th></tr></thead>`;
+  const htb=document.createElement('tbody');
+  hmS.forEach(s=>{const vls=ms.map(mi=>s.bpc[mi]);const f=vls.find(v=>v!=null),l=[...vls].reverse().find(v=>v!=null);const dv=f&&l?+(l-f).toFixed(1):null;htb.innerHTML+=`<tr><td><strong>${s.n}</strong></td>${vls.map(v=>`<td><span style="display:inline-block;padding:3px 8px;border-radius:5px;background:${heatBg(v)};color:#fff;font-weight:700;font-size:11px;min-width:44px;text-align:center">${v!=null?v.toFixed(1)+'%':'—'}</span></td>`).join('')}<td style="font-weight:700;font-size:11px;color:${dv==null?'#aaa':dv>0?G:dv<0?R:'#aaa'}">${dv!=null?(dv>0?'▲ +':dv<0?'▼ ':'')+dv+'pp':'—'}</td></tr>`;});
+  hm.appendChild(htb);
+  // GMV Risk
+  const rM=ms.map(mi=>{const rg=ss.filter(s=>s.bpc[mi]!=null&&s.bpc[mi]<80).reduce((a,s)=>a+(s.gmv[mi]||0),0);const tg=ss.reduce((a,s)=>a+(s.gmv[mi]||0),0);return tg?+(rg/tg*100).toFixed(1):0;});
+  charts['cGmvRisk']?.destroy();
+  charts['cGmvRisk']=new Chart(document.getElementById('cGmvRisk'),{type:'bar',data:{labels:ms.map(i=>MN[i]),datasets:[{label:'% GMV em Risco',data:rM,backgroundColor:rM.map(v=>v>60?R+'bb':v>40?Y+'bb':G+'bb'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}% do GMV abaixo de 80% BPC`}}},scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+  // BPC Offenders
+  const off=document.getElementById('tBpcOff');
+  off.innerHTML=`<thead><tr><th>Item ID</th><th>Título</th><th>Status</th><th>Seller</th><th>Cust ID</th><th>Domínio</th><th>BPC</th><th>Part. Carteira</th><th>Var MoM</th><th>Tendência</th></tr></thead>`;
+  const otb=document.createElement('tbody');
+  [...BPC_OFF].sort((a,b)=>a.bpc_i[cur]-b.bpc_i[cur]).forEach(it=>{
+    const b=it.bpc_i[cur],bp=prev!=null?it.bpc_i[prev]:null;
+    const mm=bp!=null?+(b-bp).toFixed(2):null;
+    const allVals=it.bpc_i.filter(v=>v!=null);
+    const isWorsening=allVals.length>1&&allVals.every((v,i,a)=>i===0||v<=a[i-1]);
+    const trend=isWorsening?'⬇ Piora contínua':mm!=null&&mm>0?'↑ Melhorando':'→ Estável';
+    const tc=isWorsening?'br':mm!=null&&mm>0?'bg':'bb';
+    otb.innerHTML+=`<tr>
+      <td style="font-size:10px;font-family:monospace;color:var(--gr)">${fmtItemId(it.id)}</td>
+      <td>${itemLink(it.id,it.nm)}</td>
+      <td>${statusBadge(it.status)}</td>
+      <td style="font-size:11px;color:var(--gr)">${it.sel}</td>
+      <td style="font-size:10px;font-family:monospace;color:var(--gr)">${it.cid}</td>
+      <td style="font-size:11px;color:var(--gr)">${it.domain}</td>
+      <td><span style="display:inline-block;padding:3px 8px;border-radius:5px;background:${heatBg(b*100)};color:#fff;font-weight:700;font-size:11px">${(b*100).toFixed(1)}%</span></td>
+      <td style="font-weight:700">${it.part[cur].toFixed(1)}%</td>
+      <td><span class="d ${mm==null?'fl':mm>0?'up':'dn'}">${mm!=null?(mm>0?'+':'')+fmtP(mm*100):'—'}</span></td>
+      <td><span class="badge ${tc}">${trend}</span></td>
+    </tr>`;
+  });
+  off.appendChild(otb);
+}
+
+/* ═══ TAB 3: ECOSSISTEMA ═══ */
+let t3done=false;
+function renderTab3(){
+  const{ms,ss,cur,prev}=getD();
+  const selCids=new Set(ss.map(s=>s.cid));
+  const fCombo=COMBO_DATA.filter(d=>selCids.has(d.cid));
+  const fPromo=PROMO_DATA.filter(d=>selCids.has(d.cid));
+
+  // ── INSIGHTS ECO ──
+  const totPsj=fCombo.reduce((a,d)=>a+ms.reduce((b,mi)=>b+(d.psj[mi]||0),0),0);
+  const totPcj=fCombo.reduce((a,d)=>a+ms.reduce((b,mi)=>b+(d.pcj[mi]||0),0),0);
+  const totCombo=totPsj+totPcj;
+  const totDxiS=fPromo.reduce((a,d)=>a+ms.reduce((b,mi)=>b+(d.dxi_s[mi]||0),0),0);
+  const totGmvPromo=fPromo.reduce((a,d)=>a+ms.reduce((b,mi)=>b+(d.gmv[mi]||0),0),0);
+  document.getElementById('insEco').innerHTML=[
+    {t:`${(totPsj/totCombo*100).toFixed(0)}% do GMV em PSJ (Combo Premium) — parcelamento sem juros`,c:'g'},
+    {t:`Investimento total do seller em promoções: ${fmtM(totDxiS)} (DXI)`,c:'y'},
+    {t:`${fCombo.filter(d=>(d.psj[cur]||0)<(d.pcj[cur]||0)).map(d=>d.n).join(', ')} com mais PCJ que PSJ — revisar combos`,c:'r'},
+    {t:`LUCAS-HOME e ZIDI com alto PCJ — impacto potencial no BPC`,c:'y'},
+  ].map(i=>`<div class="ins ${i.c}">● ${i.t}</div>`).join('');
+
+  // ── COMBO ──
+  const comboSorted=[...fCombo].map(d=>{
+    const p=ms.reduce((a,mi)=>a+(d.psj[mi]||0),0);
+    const c=ms.reduce((a,mi)=>a+(d.pcj[mi]||0),0);
+    return{n:d.n,psj:p,pcj:c,pct:+(p/(p+c)*100).toFixed(1)};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  charts['cComboSeller']?.destroy();
+  charts['cComboSeller']=new Chart(document.getElementById('cComboSeller'),{type:'bar',data:{
+    labels:comboSorted.map(d=>d.n),
+    datasets:[
+      {label:'PSJ (Sem Juros)',data:comboSorted.map(d=>d.pct),backgroundColor:G+'cc',stack:'s',borderRadius:4},
+      {label:'PCJ (Com Juros)', data:comboSorted.map(d=>+(100-d.pct).toFixed(1)),backgroundColor:R+'66',stack:'s'},
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:10}}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+
+  const psjTrend=ms.map(mi=>fCombo.reduce((a,d)=>{const p=(d.psj[mi]||0),c=(d.pcj[mi]||0);return a+p/(p+c+.001)*100;},0)/fCombo.filter(d=>d.psj[mi]!=null).length);
+  charts['cComboTrend']?.destroy();
+  charts['cComboTrend']=new Chart(document.getElementById('cComboTrend'),{type:'line',data:{
+    labels:ms.map(i=>MN[i]),
+    datasets:[{label:'% PSJ médio carteira',data:psjTrend.map(v=>+v.toFixed(1)),borderColor:G,backgroundColor:G+'18',borderWidth:2.5,pointRadius:5,fill:true,tension:0.3}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`PSJ médio: ${c.raw}%`}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+
+  const psjHigh=comboSorted.filter(d=>d.pct>=80);
+  const psjLow=comboSorted.filter(d=>d.pct<40);
+  si('si-combo',
+    [psjHigh.length?`${psjHigh.map(d=>d.n).join(', ')} com PSJ ≥ 80% — boa experiência de parcelamento`:null].filter(Boolean),
+    [psjLow.length?`${psjLow.map(d=>d.n).join(', ')} com PSJ < 40% — comprador paga juros (pior BPC)`:null].filter(Boolean),
+    [`Revisar combo de ${psjLow.map(d=>d.n).join(', ')} para aumentar oferta sem juros`].filter(Boolean)
+  );
+
+  // ── PROMOÇÕES ──
+  const promoTypes=[
+    {k:'dxi_s', lbl:'DXI Seller',   col:B+'cc'},
+    {k:'dxi_m', lbl:'DXI Meli',     col:B+'55'},
+    {k:'dxb_s', lbl:'DXB Seller',   col:'#9B59B6cc'},
+    {k:'dxb_m', lbl:'DXB Meli',     col:'#9B59B655'},
+    {k:'ltg_s', lbl:'Relâmpago',    col:Y+'cc'},
+    {k:'dod_s', lbl:'Oferta do Dia',col:'#E67E22cc'},
+    {k:'cupons',lbl:'Cupons Meli',  col:GR+'cc'},
+  ];
+  const promoByS=fPromo.map(d=>{
+    const tot=promoTypes.reduce((a,t)=>a+ms.reduce((b,mi)=>b+(d[t.k][mi]||0),0),0);
+    return{n:d.n,tot,...Object.fromEntries(promoTypes.map(t=>[t.k,ms.reduce((a,mi)=>a+(d[t.k][mi]||0),0)]))};
+  }).sort((a,b)=>b.tot-a.tot);
+
+  charts['cPromoSeller']?.destroy();
+  charts['cPromoSeller']=new Chart(document.getElementById('cPromoSeller'),{type:'bar',data:{
+    labels:promoByS.map(d=>d.n),
+    datasets:promoTypes.map(t=>({label:t.lbl,data:promoByS.map(d=>Math.round(d[t.k]/1000)),backgroundColor:t.col,stack:'s'}))
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:8}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:9}}},y:{ticks:{callback:v=>'R$'+v+'K',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+
+  const promoTrend=ms.map(mi=>fPromo.reduce((a,d)=>a+(d.dxi_s[mi]||0)+(d.dxb_s[mi]||0)+(d.ltg_s[mi]||0)+(d.dod_s[mi]||0),0));
+  const gmvTrend=ms.map(mi=>fPromo.reduce((a,d)=>a+(d.gmv[mi]||0),0));
+  const pctTrend=promoTrend.map((v,i)=>gmvTrend[i]?+(v/gmvTrend[i]*100).toFixed(1):null);
+  charts['cPromoTrend']?.destroy();
+  charts['cPromoTrend']=new Chart(document.getElementById('cPromoTrend'),{type:'bar',data:{
+    labels:ms.map(i=>MN[i]),
+    datasets:[
+      {type:'bar',label:'Inv. Seller (R$ mil)',data:promoTrend.map(v=>Math.round(v/1000)),backgroundColor:B+'88',borderRadius:5,yAxisID:'y'},
+      {type:'line',label:'% do GMV',data:pctTrend,borderColor:R,backgroundColor:'transparent',borderWidth:2,pointRadius:4,yAxisID:'y2',spanGaps:true},
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},
+      y:{ticks:{callback:v=>'R$'+v+'K',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},
+      y2:{position:'right',ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{display:false}}}}});
+
+  // Tabela promoções
+  const tPromo=document.getElementById('tblPromo');
+  tPromo.innerHTML=`<thead><tr><th>Seller</th><th>DXI Seller</th><th>DXI Meli</th><th>DXB Seller</th><th>Relâmpago</th><th>Oferta Dia</th><th>Cupons</th><th>Total Inv.</th><th>GMV</th><th>% Promovido</th></tr></thead>`;
+  const ptb=document.createElement('tbody');
+  promoByS.forEach(d=>{
+    const pct=fPromo.find(x=>x.n===d.n)?.gmv?+(d.tot/promoByS.find(x=>x.n===d.n)?.tot*100||0).toFixed(1):null;
+    const gmvD=ms.reduce((a,mi)=>a+(fPromo.find(x=>x.n===d.n)?.gmv[mi]||0),0);
+    const promoPct=gmvD?+(d.tot/gmvD*100).toFixed(1):null;
+    ptb.innerHTML+=`<tr>
+      <td><strong>${d.n}</strong></td>
+      <td>${fmtM(d.dxi_s)}</td><td>${fmtM(d.dxi_m)}</td><td>${fmtM(d.dxb_s)}</td>
+      <td>${fmtM(d.ltg_s)}</td><td>${fmtM(d.dod_s)}</td><td>${fmtM(d.cupons)}</td>
+      <td><strong>${fmtM(d.tot)}</strong></td>
+      <td>${fmtM(gmvD)}</td>
+      <td style="font-weight:700;color:${promoPct>50?'var(--r)':promoPct>25?'var(--y)':'var(--g)'}">${promoPct!=null?promoPct+'%':'—'}</td>
+    </tr>`;
+  });
+  tPromo.appendChild(ptb);
+
+  const highDep=promoByS.filter(d=>{const gmvD=ms.reduce((a,mi)=>a+(fPromo.find(x=>x.n===d.n)?.gmv[mi]||0),0);return gmvD&&d.tot/gmvD>0.4;});
+  si('si-promo',
+    [promoByS.filter(d=>d.dxi_m>0).length?`${promoByS.filter(d=>d.dxi_m>0).map(d=>d.n).join(', ')} recebem co-investimento de Meli em DXI`:null].filter(Boolean),
+    [highDep.length?`${highDep.map(d=>d.n).join(', ')} com alta dependência promocional (>40% do GMV)`:null].filter(Boolean),
+    [`Avaliar ROI das promoções em ${highDep[0]?.n||promoByS[0]?.n} — reduzir dependência de desconto`,
+     `Explorar campanhas compartilhadas com Meli para diluir custo`].filter(Boolean)
+  );
+
+  // ── CLIPs (reaproveitado) ──
+  renderClipsTo('tblClips2','cClips2','si-clips2',ss,ms,cur);
+
+  // ── PAGAMENTOS (reaproveitado) ──
+  renderPaymentTo('cPayTotal2','cPaySeller2','si-pay2',ss);
+
+  // ── ITENS (reaproveitado) ──
+  renderItemsEco(ss,ms,cur,prev);
+}
+
+// Versão genérica de renderClips que aceita IDs dinâmicos
+function renderClipsTo(tblId,chartId,insId,ss,ms,cur){
+  const selCids=new Set(ss.map(s=>s.cid));
+  const filtered=CLIPS_DATA.filter(d=>selCids.has(d.cid));
+  function sellerGmv(cid,mi){const s=S.find(x=>x.cid===cid);return s?s.gmv[mi]||null:null;}
+  function covPct(d,mi){const r=sellerGmv(d.cid,mi);return r&&d.gmv_clips[mi]?+(d.gmv_clips[mi]/r*100).toFixed(1):null;}
+  function vipPct(d,mi){const r=sellerGmv(d.cid,mi);return r&&d.vip[mi]?+(d.vip[mi]/r*100).toFixed(1):null;}
+  function pdpPct(d,mi){const r=sellerGmv(d.cid,mi);return r&&d.pdp[mi]?+(d.pdp[mi]/r*100).toFixed(1):null;}
+  const NIVEL_COLORS={'Platinum':'#00A650','Gold':'#FFB800',null:'#E0E0E0'};
+  const tbl=document.getElementById(tblId);
+  tbl.innerHTML=`<thead><tr><th>Seller</th><th>Solução</th><th>Nível</th>${ms.map(mi=>`<th>Cob. ${MN[mi]}</th>`).join('')}<th>VIP (${MN[cur]})</th><th>PDP (${MN[cur]})</th><th>GMV CLIPs</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  [...filtered].sort((a,b)=>(covPct(b,cur)||0)-(covPct(a,cur)||0)).forEach(d=>{
+    const cv=covPct(d,cur);const cfg=d.nivel;const nColor=NIVEL_COLORS[cfg]||'#aaa';
+    const trendCells=ms.map(mi=>{const p=covPct(d,mi);return`<td style="font-weight:700;color:${p>20?'var(--g)':p>10?'var(--y)':p!=null?'var(--r)':'#ccc'}">${p!=null?p+'%':'—'}</td>`;}).join('');
+    tb.innerHTML+=`<tr><td><strong>${d.n}</strong></td><td style="font-size:11px">${d.sol||'<span style="color:#aaa">sem solução</span>'}</td><td><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${nColor};color:${cfg==='Gold'?'#333':'#fff'}">${cfg||'—'}</span></td>${trendCells}<td style="color:var(--b)">${vipPct(d,cur)!=null?vipPct(d,cur)+'%':'—'}</td><td style="color:var(--b);opacity:.6">${pdpPct(d,cur)!=null?pdpPct(d,cur)+'%':'—'}</td><td><strong>${fmtM(d.gmv_clips[cur])}</strong></td></tr>`;
+  });
+  tbl.appendChild(tb);
+  const chartData=filtered.map(d=>({n:d.n,vip:vipPct(d,cur)||0,pdp:pdpPct(d,cur)||0})).sort((a,b)=>(b.vip+b.pdp)-(a.vip+a.pdp));
+  charts[chartId]?.destroy();
+  charts[chartId]=new Chart(document.getElementById(chartId),{type:'bar',data:{labels:chartData.map(d=>d.n),datasets:[{label:'VIP %',data:chartData.map(d=>d.vip),backgroundColor:B+'cc',stack:'s',borderRadius:4},{label:'PDP %',data:chartData.map(d=>d.pdp),backgroundColor:B+'55',stack:'s'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}},scales:{x:{min:0,max:25,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},y:{grid:{display:false},ticks:{color:'#555',font:{size:10}}}}}});
+  const noSol=filtered.filter(d=>!d.sol),lowCov=filtered.filter(d=>(covPct(d,cur)||0)<10);
+  si(insId,[filtered.filter(d=>d.nivel==='Platinum').length?`${filtered.filter(d=>d.nivel==='Platinum').length} sellers com solução Platinum`:null].filter(Boolean),[noSol.length?`${noSol.map(d=>d.n).join(', ')} sem solução vinculada`:null,lowCov.length?`${lowCov.map(d=>d.n).join(', ')} com cobertura < 10%`:null].filter(Boolean),[noSol.length?`Avaliar solução para ${noSol[0]?.n}`:null].filter(Boolean));
+}
+
+function renderPaymentTo(totalId,sellerId,insId,ss){
+  const selCids=new Set(ss.map(s=>s.cid));
+  const filtered=PAY_DATA.filter(d=>selCids.has(d.cid));
+  const tots={};PAY_MET.forEach(m=>tots[m]=filtered.reduce((a,d)=>a+(d[m]||0),0));
+  const grandTotal=PAY_MET.reduce((a,m)=>a+tots[m],0);
+  charts[totalId]?.destroy();
+  charts[totalId]=new Chart(document.getElementById(totalId),{type:'doughnut',data:{labels:PAY_MET.map(m=>PAY_LBL[m]),datasets:[{data:PAY_MET.map(m=>Math.round(tots[m])),backgroundColor:PAY_MET.map(m=>PAY_COL[m]),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10,padding:8}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmtM(c.raw)} (${grandTotal?(c.raw/grandTotal*100).toFixed(1):'0'}%)`}}}}});
+  const selData=filtered.map(d=>{const tot=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);return{nm:d.n,tot,...Object.fromEntries(PAY_MET.map(m=>[m,tot>0?(d[m]||0)/tot*100:0]))};}).sort((a,b)=>b.tot-a.tot);
+  charts[sellerId]?.destroy();
+  charts[sellerId]=new Chart(document.getElementById(sellerId),{type:'bar',data:{labels:selData.map(d=>d.nm),datasets:PAY_MET.map(m=>({label:PAY_LBL[m],data:selData.map(d=>+d[m].toFixed(1)),backgroundColor:PAY_COL[m]+'cc',stack:'s',borderWidth:0}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:9,padding:6}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(1)}%`}}},scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:10}}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
+  const pixHigh=filtered.filter(d=>{const t=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);return t>0&&(d.pix||0)/t>=0.25;});
+  const pixLow=filtered.filter(d=>{const t=PAY_MET.reduce((a,m)=>a+(d[m]||0),0);return t>0&&(d.pix||0)/t<0.15;});
+  si(insId,[pixHigh.length?`${pixHigh.map(d=>d.n).join(', ')} com PIX > 25%`:null].filter(Boolean),[pixLow.length?`${pixLow.map(d=>d.n).join(', ')} com PIX < 15%`:null].filter(Boolean),['Incentivar adoção de PIX nos sellers com menor share'].filter(Boolean));
+}
+
+let itemSortBy2='gmv';
+function renderItemsEco(ss,ms,cur,prev){
+  const selNm=new Set(ss.map(s=>s.n));
+  const filtered=ITEMS.filter(it=>selNm.has(it.sel));
+  const itmGmv=it=>ms.reduce((a,mi)=>a+(it.gmv[mi]||0),0);
+  const itmUnits=it=>ms.reduce((a,mi)=>a+(it.units[mi]||0),0);
+  const itmPrice=it=>{const v=ms.map(mi=>it.p[mi]).filter(v=>v!=null);return v[v.length-1]||null;};
+  const itmMom=it=>{const c=it.gmv[cur]||0,p=prev!=null?(it.gmv[prev]||0):null;return p!=null?momMTD(c,p,prev,cur):null;};
+  const totalItGmv=filtered.reduce((a,it)=>a+itmGmv(it),0);
+  const itmShare=it=>totalItGmv>0?itmGmv(it)/totalItGmv*100:null;
+  // Combo type do item (baseado no seller PSJ dominante)
+  function itmCombo(it){
+    const d=COMBO_DATA.find(x=>x.n===it.sel);
+    if(!d)return'—';
+    const psj=ms.reduce((a,mi)=>a+(d.psj[mi]||0),0);
+    const pcj=ms.reduce((a,mi)=>a+(d.pcj[mi]||0),0);
+    return psj>=pcj?'<span class="badge bg">PSJ</span>':'<span class="badge by">PCJ</span>';
+  }
+  const IT_HEAD2=`<thead><tr><th>#</th><th>Item ID</th><th>Título</th><th>Status</th><th>Combo</th><th>Seller</th><th>GMV Período</th><th>Share GMV</th><th>Units</th><th>GMV MoM</th></tr></thead>`;
+  function itRow2(it,gmv,units,price,mm,share,rank){
+    const sp=share!=null?`<div style="display:flex;align-items:center;gap:6px"><div style="width:${Math.min(+share.toFixed(1)*3,80)}px;height:5px;background:var(--b);border-radius:3px;flex-shrink:0"></div><span style="font-weight:700;font-size:11px">${share.toFixed(1)}%</span></div>`:'—';
+    return`<tr><td style="font-size:11px;font-weight:800;color:${rank<=3?'var(--b)':'var(--gr)'};text-align:center">${rank}</td><td style="font-size:10px;font-family:monospace;color:var(--gr)">${fmtItemId(it.id)}</td><td>${itemLink(it.id,it.nm)}</td><td>${statusBadge(it.status)}</td><td>${itmCombo(it)}</td><td style="font-size:11px;color:var(--gr)">${it.sel}</td><td><strong>${fmtM(gmv)}</strong></td><td>${sp}</td><td>${units!=null?units.toLocaleString('pt-BR'):'—'}</td><td><span class="d ${dc(+mm)}">${mm!=null?fmtP(+mm):'—'}</span></td></tr>`;
+  }
+  function sv(it){switch(itemSortBy2){case'units':return itmUnits(it);case'share':return itmGmv(it);case'price':return itmPrice(it)||0;case'mom':return parseFloat(itmMom(it))||0;default:return itmGmv(it);}}
+  const mk2=rows=>IT_HEAD2+'<tbody>'+rows.map((it,i)=>itRow2(it,itmGmv(it),itmUnits(it),itmPrice(it),itmMom(it),itmShare(it),i+1)).join('')+'</tbody>';
+  const firstMi=ms[0];
+  const top2=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sv(b)-sv(a));
+  const q2=[...filtered].filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi]).sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
+  const p2=[...filtered].filter(it=>it.p[cur]&&it.p[firstMi]&&Math.abs((it.p[cur]-it.p[firstMi])/it.p[firstMi])>0.005).sort((a,b)=>Math.abs((b.p[cur]-b.p[firstMi])/b.p[firstMi])-Math.abs((a.p[cur]-a.p[firstMi])/a.p[firstMi]));
+  const vc2=[...filtered].filter(it=>it.vc_neg).sort((a,b)=>itmGmv(b)-itmGmv(a));
+  document.getElementById('tTop2').innerHTML=mk2(top2);
+  document.getElementById('tQueda2').innerHTML=mk2(q2);
+  document.getElementById('tPreco2').innerHTML=mk2(p2);
+  document.getElementById('tVc2').innerHTML=mk2(vc2);
+  // sort pills eco
+  const sp2=document.getElementById('sortPills2');
+  if(!sp2.children.length){SORT_OPTS.forEach(o=>{const b=document.createElement('button');b.className='spill'+(o.k===itemSortBy2?' on':'');b.textContent=o.l;b.onclick=()=>{itemSortBy2=o.k;document.querySelectorAll('#sortPills2 .spill').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderItemsEco(ss,ms,cur,prev);};sp2.appendChild(b);});}
+}
+function showItTab2(id,btn){document.querySelectorAll('[id^="it2-"]').forEach(el=>el.style.display='none');document.querySelectorAll('.stb').forEach(b=>b.classList.remove('on'));document.getElementById('it2-'+id).style.display='block';btn.classList.add('on');}
+
+/* ═══ TAB SWITCH ═══ */
+function switchTab(id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tnb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  event.target.classList.add('on');
+  if(id==='t2'){renderTab2();}
+  if(id==='t3'&&!t3done){renderTab3();t3done=true;}
+  else if(id==='t3'){renderTab3();}
+}
+function gotoSec(id){document.querySelector(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+
+/* ═══ BOOT ═══ */
+buildPresets();
+buildSelChips();
+render();
+</script>
+</body>
+</html>
