@@ -1396,26 +1396,27 @@ function heatBg(v){if(v==null)return'#F4F5F7';if(v>=80)return G;if(v>=70)return 
 // id é numérico (ITE_ITEM_ID do BQ). URL: produto.mercadolivre.com.br/MLB-{id}
 // Gera título legível: usa nm real se disponível, senão formata domain+seller
 function getItemTitle(it){
-  // Usa título real se disponível (não é placeholder "Item XXXXX")
-  if(it&&it.nm&&!it.nm.startsWith('Item ')){return it.nm;}
-  // Fallback: categoria legível + seller + ID curto
+  if(!it)return'—';
+  // Título real disponível
+  if(it.nm&&!it.nm.startsWith('Item '))return it.nm;
+  // Fallback padronizado: [Categoria] — [Seller] · MLB[ID]
   const domMap={
-    'MLB-MATTRESSES':'Colchão','MLB-BOX_SPRING_AND_MATTRESS_KITS':'Cama Box + Colchão',
+    'MLB-MATTRESSES':'Colchao','MLB-BOX_SPRING_AND_MATTRESS_KITS':'Cama Box + Colchao',
     'MLB-BOX_SPRING_BASES':'Base Box','MLB-PILLOWS':'Travesseiro',
-    'MLB-MATTRESS_COVERS':'Protetor/Pillow Top','MLB-BATH_TOWELS':'Toalha de Banho',
-    'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':'Colchão Massageador',
-    'MLB-POUFS':'Puff','MLB-SOFAS':'Sofá','MLB-DINING_TABLES':'Mesa Jantar',
-    'MLB-WALL_SHELVES':'Prateleira','MLB-SPEAKERS':'Caixa Acústica',
-    'MLB-EXERCISE_AND_YOGA_MATS':'Tapete Yoga','MLB-AIR_MATTRESSES':'Colchão Inflável',
+    'MLB-MATTRESS_COVERS':'Protetor de Colchao','MLB-BATH_TOWELS':'Toalha de Banho',
+    'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':'Colchao Massageador',
+    'MLB-POUFS':'Puff','MLB-SOFAS':'Sofa','MLB-DINING_TABLES':'Mesa Jantar',
+    'MLB-WALL_SHELVES':'Prateleira','MLB-SPEAKERS':'Caixa Acustica',
+    'MLB-EXERCISE_AND_YOGA_MATS':'Tapete Yoga','MLB-AIR_MATTRESSES':'Colchao Inflavel',
     'MLB-CAT_AND_DOG_BEDS':'Cama Pet','MLB-BED_SHEETS':'Jogo de Cama',
     'MLB-BEDDING':'Roupa de Cama','MLB-CUSHIONS':'Almofada','MLB-BLANKETS':'Cobertor',
-    'MLB-COMFORTERS':'Edredom','MLB-HEALTH_CARE_SUPPLIES':'Produto Saúde',
+    'MLB-COMFORTERS':'Edredom','MLB-HEALTH_CARE_SUPPLIES':'Produto Saude',
+    'MLB-HEADBOARDS':'Cabeceira','MLB-HOME_SUPPLIES':'Casa','MLB-ROBES':'Roupao',
+    'MLB-SLEEPING_BAGS':'Saco de Dormir','MLB-EXERCISE_MATS':'Tapete Exercicio',
   };
-  const dom=it&&it.domain?it.domain:'';
+  const dom=it.domain||'';
   const cat=domMap[dom]||(dom.replace('MLB-','').replace(/_/g,' '));
-  const sel=it&&it.sel?it.sel:'';
-  const id=it&&it.id?(' #'+it.id):'';
-  return cat+(sel?' — '+sel:'')+id;
+  return cat+' ('+it.sel+') · MLB'+it.id;
 }
 function itemLink(id,nm,it){
   // URL correta para ITE_ITEM_ID: www.mercadolivre.com.br/MLB-{id}
@@ -2525,48 +2526,34 @@ function renderItems(){
   const _iFirst=it=>[0,1,2,3].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
   const _iLast =it=>[3,2,1,0].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
 
-  // Top Itens
-  const top=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sortVal(b)-sortVal(a));
+  // ── Sort universal: aplica critério selecionado em TODAS as abas ──
+  // Para tabs com filtro próprio, sortVal é o critério secundário
+  const applySort=(arr)=>[...arr].sort((a,b)=>sortVal(b)-sortVal(a));
 
-  // Em Queda: compara primeiro mês com dados vs último — funciona mesmo com filtro de 1 mês
-  const q=[...filtered].filter(it=>{
+  // Top Itens — primário: critério selecionado
+  const top=applySort(filtered.filter(it=>itmGmv(it)>0));
+
+  // Em Queda — filtra queda, ordena pelo critério selecionado (GMV, Units, etc.)
+  const q=applySort(filtered.filter(it=>{
     const f=_iFirst(it),l=_iLast(it);
     return f!=null&&l!=null&&f!==l&&it.gmv[l]<it.gmv[f];
-  }).sort((a,b)=>{
-    const ra=_iFirst(a)!=null?a.gmv[_iLast(a)]/a.gmv[_iFirst(a)]:1;
-    const rb=_iFirst(b)!=null?b.gmv[_iLast(b)]/b.gmv[_iFirst(b)]:1;
-    return ra-rb;
-  });
+  }));
 
-  // Aumento de Preço: compara sempre Jan(p[0]) vs Abr(p[3]) — referência fixa, ignora filtro de mês
-  // para evitar comparar o mesmo mês vs ele mesmo quando período = 1 mês
+  // Aumento de Preço — filtra alta de preço/ticket, ordena pelo critério selecionado
   const _pRef=function(it){
-    // 1. Preço real: Abr > Jan
     const pA=it.p[3],pJ=it.p[0];
-    if(pA&&pJ&&pA>pJ)return{type:'preco',delta:(pA-pJ)/pJ,ref:pJ,val:pA};
-    // 2. Ticket médio (GMV/Units): Abr > Jan (>2%)
+    if(pA&&pJ&&pA>pJ)return(pA-pJ)/pJ;
     const tA=it.gmv[3]&&it.units[3]?it.gmv[3]/it.units[3]:null;
     const tJ=it.gmv[0]&&it.units[0]?it.gmv[0]/it.units[0]:null;
-    if(tA&&tJ&&tA>tJ*1.02)return{type:'ticket',delta:(tA-tJ)/tJ,ref:tJ,val:tA};
+    if(tA&&tJ&&tA>tJ*1.02)return(tA-tJ)/tJ;
     return null;
   };
-  var pWithDelta=filtered.map(it=>({it,ref:_pRef(it)})).filter(x=>x.ref!==null);
-  // Fallback: se < 5 resultados, adiciona top itens por preço atual (premium review)
-  var p;
-  if(pWithDelta.length>=3){
-    p=pWithDelta.sort((a,b)=>b.ref.delta-a.ref.delta).map(x=>x.it);
-  } else {
-    // Mostra itens com maior preço atual (Abr ou último disponível)
-    p=[...filtered].filter(it=>{const v=it.p[3]||it.p[2]||it.p[1]||it.p[0];return v!=null;})
-      .sort((a,b)=>{
-        const pa=a.p[3]||a.p[2]||a.p[1]||a.p[0]||0;
-        const pb=b.p[3]||b.p[2]||b.p[1]||b.p[0]||0;
-        return pb-pa;
-      });
-  }
+  const pBase=filtered.filter(it=>_pRef(it)!==null);
+  const p=applySort(pBase.length>=3?pBase:
+    filtered.filter(it=>it.p[3]||it.p[2]||it.p[1]||it.p[0]));
 
-  // VC Negativa (ordenado por GMV)
-  const vc=[...filtered].filter(it=>it.vc_neg).sort((a,b)=>itmGmv(b)-itmGmv(a));
+  // VC Negativa — ordena pelo critério selecionado
+  const vc=applySort(filtered.filter(it=>it.vc_neg));
 
   // Inicializa pills de sort (apenas uma vez)
   initSortPills();
