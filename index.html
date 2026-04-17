@@ -83,6 +83,7 @@ header{background:var(--nv);padding:16px 32px;display:flex;align-items:center;ju
 .kpi-lbl{font-size:9px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
 .kpi-val{font-size:26px;font-weight:900;letter-spacing:-1px;line-height:1;color:var(--nv);}
 .kpi-deltas{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.kpi-note{font-size:10px;color:var(--gr);margin-top:5px;}
 .d{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;}
 .d.up{background:rgba(0,166,80,.1);color:var(--g);}
 .d.dn{background:rgba(230,57,70,.1);color:var(--r);}
@@ -1415,50 +1416,44 @@ function renderClips(ss,ms,cur){
 }
 
 /* ═══ METAS ═══ */
-// Cores MeLi: amarelo=#FFE600(meta), azul=#3483FA(real), laranja=#FF6900(desafio)
-const MELI_YELLOW='#FFE600', MELI_ORANGE='#FF6900';
+const MELI_YELLOW='#FFE600',MELI_ORANGE='#FF6900';
 
 function renderMetas(ss,ms,cur){
-  const metaSellers=Object.entries(METAS).map(([cid,m])=>{
-    const s=S.find(x=>x.cid===+cid);
-    const gmvReal=s?ms.reduce((a,mi)=>a+(s.gmv[mi]||0),0):null;
+  // Constrói lista de sellers com meta (sem filtro de sellers — sempre mostra todos com meta)
+  const metaSellers=Object.entries(METAS).map(([cidStr,m])=>{
+    const cid=Number(cidStr);
+    const s=S.find(x=>x.cid===cid)||null;
+    const gmvReal=s?ms.reduce((a,mi)=>a+(s.gmv[mi]||0),0):0;
     const metaFin=ms.reduce((a,mi)=>a+(m.fin[mi]||0),0);
     const metaDes=ms.reduce((a,mi)=>a+(m.des[mi]||0),0);
-    const pctFin=gmvReal&&metaFin?+(gmvReal/metaFin*100).toFixed(1):null;
-    const pctDes=gmvReal&&metaDes?+(gmvReal/metaDes*100).toFixed(1):null;
-    return{cid:+cid,nm:m.nm,s,gmvReal,metaFin,metaDes,pctFin,pctDes};
-  }).filter(d=>FS.sellers.size===0||!d.s||(d.s&&FS.sellers.has(d.s.n)));
+    const pctFin=metaFin>0?Math.round(gmvReal/metaFin*100):0;
+    const pctDes=metaDes>0?Math.round(gmvReal/metaDes*100):0;
+    return{cid,nm:m.nm,s,gmvReal,metaFin,metaDes,pctFin,pctDes};
+  });
 
-  // Cor barra: azul MeLi se bateu meta, amarelo se atenção, vermelho se abaixo
-  function barCol(pct){
-    if(pct==null)return GR;
-    if(pct>=100) return B;   // MeLi blue — bateu meta
-    if(pct>=80)  return Y;   // atenção
-    return R;                // abaixo
-  }
-
-  // Badge hierárquico claro
-  function atBadge(pctFin,pctDes){
-    if(pctDes>=100) return`<span class="badge" style="background:#7B00CC22;color:#7B00CC;font-size:11px;padding:4px 10px">🥇 Desafio Batido — Excelente!</span>`;
-    if(pctFin>=100) return`<span class="badge bg" style="font-size:11px;padding:4px 10px">✅ Meta Financeira Atingida</span>`;
-    if(pctFin>=80)  return`<span class="badge by" style="font-size:11px;padding:4px 10px">⚠️ Em Atenção — 80–99%</span>`;
-    return`<span class="badge br" style="font-size:11px;padding:4px 10px">🔴 Abaixo da Meta (&lt;80%)</span>`;
+  // Helpers
+  function barCol(pct){return pct>=100?B:pct>=80?Y:R;}
+  function atBadge(f,d){
+    if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC">🥇 Desafio Batido — Excelente!</span>';
+    if(f>=100)return'<span class="badge bg">✅ Meta Financeira Atingida</span>';
+    if(f>=80) return'<span class="badge by">Em Atenção — 80–99%</span>';
+    return'<span class="badge br">Abaixo da Meta</span>';
   }
 
   // KPIs portfolio
-  const totReal=metaSellers.reduce((a,d)=>a+(d.gmvReal||0),0);
+  const totReal=metaSellers.reduce((a,d)=>a+d.gmvReal,0);
   const totFin =metaSellers.reduce((a,d)=>a+d.metaFin,0);
   const totDes =metaSellers.reduce((a,d)=>a+d.metaDes,0);
-  const pFin=totFin?+(totReal/totFin*100).toFixed(1):null;
-  const pDes=totDes?+(totReal/totDes*100).toFixed(1):null;
+  const pFin=totFin>0?Math.round(totReal/totFin*100):0;
+  const pDes=totDes>0?Math.round(totReal/totDes*100):0;
   const onMeta=metaSellers.filter(d=>d.pctFin>=100).length;
   const onDes =metaSellers.filter(d=>d.pctDes>=100).length;
-  document.getElementById('metaKpis').innerHTML=[
-    {lbl:'GMV Real (período)',   val:fmtM(totReal),  sub:metaSellers.length+' sellers com meta',       cls:'b'},
-    {lbl:'% vs Meta Financeira', val:pFin+'%',        sub:'Objetivo: '+fmtM(totFin),                   cls:pFin>=100?'g':pFin>=80?'y':'r'},
-    {lbl:'% vs Meta Desafio',    val:pDes+'%',        sub:'Desafio: '+fmtM(totDes),                    cls:pDes>=100?'g':pDes>=80?'y':'r'},
-    {lbl:'Sellers na Meta',      val:onMeta+' / '+metaSellers.length,sub:onDes+' superaram o Desafio 🥇',cls:onMeta>=metaSellers.length?'g':'y'},
-  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div><div class="kpi-note">${k.sub}</div></div>`).join('');
+  const kpiEl=document.getElementById('metaKpis');
+  if(kpiEl) kpiEl.innerHTML=
+    '<div class="kpi b"><div class="kpi-lbl">GMV Real</div><div class="kpi-val">'+fmtM(totReal)+'</div><div class="kpi-note">'+metaSellers.length+' sellers com meta</div></div>'+
+    '<div class="kpi '+(pFin>=100?'g':pFin>=80?'y':'r')+'"><div class="kpi-lbl">% vs Meta Financeira</div><div class="kpi-val">'+pFin+'%</div><div class="kpi-note">Objetivo: '+fmtM(totFin)+'</div></div>'+
+    '<div class="kpi '+(pDes>=100?'g':pDes>=80?'y':'r')+'"><div class="kpi-lbl">% vs Meta Desafio</div><div class="kpi-val">'+pDes+'%</div><div class="kpi-note">Desafio: '+fmtM(totDes)+'</div></div>'+
+    '<div class="kpi '+(onMeta>=metaSellers.length?'g':'y')+'"><div class="kpi-lbl">Sellers na Meta</div><div class="kpi-val">'+onMeta+' / '+metaSellers.length+'</div><div class="kpi-note">'+onDes+' superaram o Desafio</div></div>';
 
   // Tabela visual
   const tbl=document.getElementById('tblMetas');
@@ -1499,58 +1494,71 @@ function renderMetas(ss,ms,cur){
   });
   tbl.appendChild(tb);
 
-  // Gráfico — cores MeLi
-  const sorted=[...metaSellers].sort((a,b)=>(b.gmvReal||0)-(a.gmvReal||0));
+  // Gráfico — cores MeLi (barras + linhas de meta)
+  const sorted=[...metaSellers].sort((a,b)=>b.gmvReal-a.gmvReal);
   charts['cMetas']?.destroy();
-  charts['cMetas']=new Chart(document.getElementById('cMetas'),{type:'bar',data:{
-    labels:sorted.map(d=>d.nm),
-    datasets:[
-      {label:'GMV Real',      data:sorted.map(d=>Math.round((d.gmvReal||0)/1000)),
-       backgroundColor:sorted.map(d=>barCol(d.pctFin)+'dd'),borderRadius:6,order:3},
-      {label:'Meta Financeira',data:sorted.map(d=>Math.round(d.metaFin/1000)),
-       type:'line',borderColor:MELI_YELLOW,backgroundColor:'transparent',
-       borderWidth:2.5,borderDash:[6,3],pointRadius:5,
-       pointBackgroundColor:MELI_YELLOW,pointBorderColor:NV,pointBorderWidth:1.5,
-       tension:0,order:1},
-      {label:'Meta Desafio',   data:sorted.map(d=>Math.round(d.metaDes/1000)),
-       type:'line',borderColor:MELI_ORANGE,backgroundColor:'transparent',
-       borderWidth:2,borderDash:[3,3],pointRadius:4,
-       pointBackgroundColor:MELI_ORANGE,tension:0,order:2},
-    ]
-  },options:{responsive:true,maintainAspectRatio:false,
-    layout:{padding:{top:10}},
-    plugins:{
-      legend:{position:'bottom',labels:{font:{size:11},boxWidth:14,padding:14,
-        generateLabels(chart){
-          return chart.data.datasets.map((ds,i)=>({
-            text:ds.label,
-            fillStyle:i===0?B:i===1?MELI_YELLOW:MELI_ORANGE,
-            strokeStyle:i===0?B:i===1?MELI_YELLOW:MELI_ORANGE,
-            lineWidth:i>0?2:0,
-            borderDash:i===1?[6,3]:i===2?[3,3]:[],
-            hidden:!chart.isDatasetVisible(i),datasetIndex:i,index:i
-          }));
-        }
-      }},
-      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtM(c.raw*1000)}`}}
+  charts['cMetas']=new Chart(document.getElementById('cMetas'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(d=>d.nm),
+      datasets:[
+        {label:'GMV Real',
+         data:sorted.map(d=>Math.round(d.gmvReal/1000)),
+         backgroundColor:sorted.map(d=>barCol(d.pctFin)+'cc'),
+         borderRadius:6},
+        {label:'Meta Financeira (---)',
+         data:sorted.map(d=>Math.round(d.metaFin/1000)),
+         type:'line',
+         borderColor:MELI_YELLOW,
+         backgroundColor:'transparent',
+         borderWidth:3,
+         borderDash:[8,4],
+         pointRadius:6,
+         pointBackgroundColor:MELI_YELLOW,
+         pointBorderColor:'#333',
+         pointBorderWidth:1.5,
+         tension:0},
+        {label:'Meta Desafio (···)',
+         data:sorted.map(d=>Math.round(d.metaDes/1000)),
+         type:'line',
+         borderColor:MELI_ORANGE,
+         backgroundColor:'transparent',
+         borderWidth:2,
+         borderDash:[3,3],
+         pointRadius:4,
+         pointBackgroundColor:MELI_ORANGE,
+         tension:0},
+      ]
     },
-    scales:{
-      x:{grid:{display:false},ticks:{color:'#555',font:{size:11,weight:'600'}}},
-      y:{ticks:{callback:v=>fmtMInt(v*1000),color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{size:11},boxWidth:12,padding:12}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label.split(' (')[0]+': '+fmtM(c.raw*1000);}}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#555',font:{size:11}}},
+        y:{ticks:{callback:function(v){return fmtMInt(v*1000);},color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}
+      }
     }
-  }});
+  });
 
   // Insights
-  const abaixo=metaSellers.filter(d=>d.pctFin!=null&&d.pctFin<80);
+  const abaixo=metaSellers.filter(d=>d.pctFin<80);
   const naFin =metaSellers.filter(d=>d.pctFin>=100);
   const naDes =metaSellers.filter(d=>d.pctDes>=100);
+  const gapPort=totFin-totReal;
   si('si-metas',
-    [naDes.length?`🥇 ${naDes.map(d=>d.nm).join(', ')} superaram a Meta Desafio`:null,
-     naFin.length?`✅ ${naFin.map(d=>d.nm).join(', ')} atingiram a Meta Financeira`:null].filter(Boolean),
-    [abaixo.length?`${abaixo.map(d=>d.nm).join(', ')} abaixo de 80% da Meta Financeira`:null,
-     pFin<100?`Carteira a ${pFin}% da Meta Financeira — gap de ${fmtM(totFin-totReal)}`:null].filter(Boolean),
-    [abaixo.length?`Reforçar ações em ${abaixo[0]?.nm} — gap de ${fmtM(abaixo[0]?.metaFin-(abaixo[0]?.gmvReal||0))} para a meta`:null,
-     naDes.length?`Acelerar ${naDes[0]?.nm} para expandir além do Desafio`:null].filter(Boolean)
+    [naDes.length?('🥇 '+naDes.map(d=>d.nm).join(', ')+' superaram a Meta Desafio'):null,
+     naFin.length?('✅ '+naFin.map(d=>d.nm).join(', ')+' atingiram a Meta Financeira'):null
+    ].filter(Boolean),
+    [abaixo.length?(abaixo.map(d=>d.nm).join(', ')+' abaixo de 80% da Meta Financeira'):null,
+     pFin<100?('Carteira a '+pFin+'% da Meta Financeira — gap de '+fmtM(gapPort)):null
+    ].filter(Boolean),
+    [abaixo.length?('Reforçar ações em '+abaixo[0].nm+' para reduzir gap'):null,
+     naDes.length?('Acelerar '+naDes[0].nm+' para expandir além do Desafio'):null
+    ].filter(Boolean)
   );
 }
 
