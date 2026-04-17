@@ -447,7 +447,7 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <div style="display:flex;gap:5px">
-            <button class="chart-mode-btn on" id="btnBpcShippers" onclick="setBpcView('shippers')">🟢 Shippers</button>
+            <button class="chart-mode-btn on" id="btnBpcShippers" onclick="setBpcView('shippers')">🟢 Cheaper</button>
             <button class="chart-mode-btn" id="btnBpcExpensive" onclick="setBpcView('expensive')">🔴 Expensive</button>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
@@ -2942,7 +2942,7 @@ function renderTab2(){
       const isShippers=bpcView==='shippers';
       const MN=['Jan','Fev','Mar','Abr'];
       const modeCol=isShippers?G:R;
-      const modeLabel=isShippers?'Shippers':'Expensive';
+      const modeLabel=isShippers?'Cheaper':'Expensive';
       const selCids=_ss&&_ss.length?new Set(_ss.map(s=>s.cid)):null;
 
       // ── Monta linhas a partir de BPC_DOMAIN_DATA — todos os seller×domínio mapeados ──
