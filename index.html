@@ -1015,7 +1015,7 @@ function render(){
   renderLogistics(ss);
   renderPayment(ss);
   renderItems();
-  renderMetas(ss,ms,cur);
+  try{renderMetas(ss,ms,cur);}catch(e){console.error('renderMetas erro:',e);document.getElementById('s-metas').style.border='2px solid red';}
   renderReputacao(ss,ms,cur);
   renderSectionInsights(ss,ms,cur,prev);
   renderAlerts(ss,cur,prev,gmvKey);
@@ -1419,24 +1419,33 @@ function renderClips(ss,ms,cur){
 const MELI_YELLOW='#FFE600',MELI_ORANGE='#FF6900';
 
 function renderMetas(ss,ms,cur){
-  // Constrói lista de sellers com meta (sem filtro de sellers — sempre mostra todos com meta)
-  const metaSellers=Object.entries(METAS).map(([cidStr,m])=>{
-    const cid=Number(cidStr);
-    const s=S.find(x=>x.cid===cid)||null;
-    const gmvReal=s?ms.reduce((a,mi)=>a+(s.gmv[mi]||0),0):0;
-    const metaFin=ms.reduce((a,mi)=>a+(m.fin[mi]||0),0);
-    const metaDes=ms.reduce((a,mi)=>a+(m.des[mi]||0),0);
-    const pctFin=metaFin>0?Math.round(gmvReal/metaFin*100):0;
-    const pctDes=metaDes>0?Math.round(gmvReal/metaDes*100):0;
-    return{cid,nm:m.nm,s,gmvReal,metaFin,metaDes,pctFin,pctDes};
-  });
+  // Constrói lista: percorre METAS com for...in para evitar qualquer issue com entries/map
+  var metaSellers=[];
+  for(var cidStr in METAS){
+    var m=METAS[cidStr];
+    var cid=parseInt(cidStr,10);
+    var seller=null;
+    for(var i=0;i<S.length;i++){if(S[i].cid===cid){seller=S[i];break;}}
+    var gmvReal=0;
+    var metaFin=0;
+    var metaDes=0;
+    for(var j=0;j<ms.length;j++){
+      var mi=ms[j];
+      gmvReal+=seller&&seller.gmv[mi]?seller.gmv[mi]:0;
+      metaFin+=m.fin[mi]?m.fin[mi]:0;
+      metaDes+=m.des[mi]?m.des[mi]:0;
+    }
+    var pctFin=metaFin>0?Math.round(gmvReal/metaFin*100):0;
+    var pctDes=metaDes>0?Math.round(gmvReal/metaDes*100):0;
+    metaSellers.push({cid:cid,nm:m.nm,s:seller,gmvReal:gmvReal,metaFin:metaFin,metaDes:metaDes,pctFin:pctFin,pctDes:pctDes});
+  }
 
   // Helpers
-  function barCol(pct){return pct>=100?B:pct>=80?Y:R;}
+  function barCol(pct){if(pct>=100)return B;if(pct>=80)return Y;return R;}
   function atBadge(f,d){
-    if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC">🥇 Desafio Batido — Excelente!</span>';
-    if(f>=100)return'<span class="badge bg">✅ Meta Financeira Atingida</span>';
-    if(f>=80) return'<span class="badge by">Em Atenção — 80–99%</span>';
+    if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC">🥇 Desafio Batido</span>';
+    if(f>=100)return'<span class="badge bg">✅ Meta Atingida</span>';
+    if(f>=80) return'<span class="badge by">Em Atencao</span>';
     return'<span class="badge br">Abaixo da Meta</span>';
   }
 
@@ -1455,44 +1464,32 @@ function renderMetas(ss,ms,cur){
     '<div class="kpi '+(pDes>=100?'g':pDes>=80?'y':'r')+'"><div class="kpi-lbl">% vs Meta Desafio</div><div class="kpi-val">'+pDes+'%</div><div class="kpi-note">Desafio: '+fmtM(totDes)+'</div></div>'+
     '<div class="kpi '+(onMeta>=metaSellers.length?'g':'y')+'"><div class="kpi-lbl">Sellers na Meta</div><div class="kpi-val">'+onMeta+' / '+metaSellers.length+'</div><div class="kpi-note">'+onDes+' superaram o Desafio</div></div>';
 
-  // Tabela visual
-  const tbl=document.getElementById('tblMetas');
-  tbl.innerHTML=`<thead><tr>
-    <th>Seller</th><th>GMV Real</th>
-    <th colspan="2">← Meta Financeira (${fmtM(totFin)})</th>
-    <th colspan="2">← Meta Desafio (${fmtM(totDes)})</th>
-    <th>Gap Meta Fin.</th><th>Status</th>
-  </tr></thead>`;
-  const tb=document.createElement('tbody');
-  [...metaSellers].sort((a,b)=>(b.pctFin||0)-(a.pctFin||0)).forEach(d=>{
-    const col=barCol(d.pctFin);
-    const barW=Math.min(d.pctFin||0,120); // cap visual at 120%
-    const gap=d.gmvReal&&d.metaFin?d.gmvReal-d.metaFin:null;
-    const gapTxt=gap==null?'—':gap>=0
-      ?`<span style="color:var(--g);font-weight:700">+${fmtM(gap)}</span>`
-      :`<span style="color:var(--r);font-weight:700">${fmtM(gap)}</span>`;
-    tb.innerHTML+=`<tr>
-      <td><strong style="font-size:12px">${d.nm}</strong></td>
-      <td><strong style="font-size:13px">${fmtM(d.gmvReal)}</strong></td>
-      <td style="min-width:120px">
-        <div style="background:#F0F2F5;border-radius:6px;height:10px;overflow:hidden">
-          <div style="width:${Math.min(d.pctFin||0,100)}%;height:100%;background:${col};border-radius:6px"></div>
-        </div>
-        <div style="font-size:10px;margin-top:2px;color:#777">${fmtM(d.metaFin)}</div>
-      </td>
-      <td><span style="font-size:16px;font-weight:900;color:${col}">${d.pctFin!=null?d.pctFin+'%':'—'}</span></td>
-      <td style="min-width:120px">
-        <div style="background:#F0F2F5;border-radius:6px;height:10px;overflow:hidden">
-          <div style="width:${Math.min(d.pctDes||0,100)}%;height:100%;background:#9B59B6;border-radius:6px;opacity:.7"></div>
-        </div>
-        <div style="font-size:10px;margin-top:2px;color:#777">${fmtM(d.metaDes)}</div>
-      </td>
-      <td><span style="font-size:14px;font-weight:800;color:#9B59B6">${d.pctDes!=null?d.pctDes+'%':'—'}</span></td>
-      <td>${gapTxt}</td>
-      <td>${atBadge(d.pctFin||0,d.pctDes||0)}</td>
-    </tr>`;
-  });
-  tbl.appendChild(tb);
+  // Tabela — escrita com string simples
+  var tbl=document.getElementById('tblMetas');
+  if(!tbl){return;}
+  var html='<thead><tr><th>Seller</th><th>GMV Real</th><th>Meta Fin.</th><th>% Fin.</th><th>Progresso</th><th>Meta Desafio</th><th>% Desafio</th><th>Gap</th><th>Status</th></tr></thead><tbody>';
+  metaSellers.sort(function(a,b){return b.pctFin-a.pctFin;});
+  for(var k=0;k<metaSellers.length;k++){
+    var d=metaSellers[k];
+    var col=barCol(d.pctFin);
+    var barW=d.pctFin>100?100:d.pctFin;
+    var gap=d.gmvReal-d.metaFin;
+    var gapStyle=gap>=0?'color:var(--g);font-weight:700':'color:var(--r);font-weight:700';
+    var gapStr=gap>=0?'+'+fmtM(gap):fmtM(gap);
+    html+='<tr>';
+    html+='<td><strong>'+d.nm+'</strong></td>';
+    html+='<td><strong style="font-size:13px">'+fmtM(d.gmvReal)+'</strong></td>';
+    html+='<td style="color:#999">'+fmtM(d.metaFin)+'</td>';
+    html+='<td><span style="font-size:15px;font-weight:900;color:'+col+'">'+d.pctFin+'%</span></td>';
+    html+='<td style="min-width:90px"><div style="background:#F0F2F5;border-radius:4px;height:8px;overflow:hidden"><div style="width:'+barW+'%;height:100%;background:'+col+'"></div></div></td>';
+    html+='<td style="color:#999">'+fmtM(d.metaDes)+'</td>';
+    html+='<td><span style="font-size:13px;font-weight:800;color:#9B59B6">'+d.pctDes+'%</span></td>';
+    html+='<td><span style="'+gapStyle+'">'+gapStr+'</span></td>';
+    html+='<td>'+atBadge(d.pctFin,d.pctDes)+'</td>';
+    html+='</tr>';
+  }
+  html+='</tbody>';
+  tbl.innerHTML=html;
 
   // Gráfico — cores MeLi (barras + linhas de meta)
   const sorted=[...metaSellers].sort((a,b)=>b.gmvReal-a.gmvReal);
