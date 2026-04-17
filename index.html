@@ -2488,13 +2488,22 @@ function renderItems(){
   };
   const firstMi=ms[0];
 
-  // Top Itens: ordenado pelo critério selecionado
+  // Helpers: primeiro/último índice com dado real (independente do filtro de período)
+  const _iFirst=it=>[0,1,2,3].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
+  const _iLast =it=>[3,2,1,0].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
+
+  // Top Itens
   const top=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sortVal(b)-sortVal(a));
 
-  // Em Queda (ordenação fixa por maior queda relativa)
-  const q=[...filtered]
-    .filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi])
-    .sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
+  // Em Queda: compara primeiro mês com dados vs último — funciona mesmo com filtro de 1 mês
+  const q=[...filtered].filter(it=>{
+    const f=_iFirst(it),l=_iLast(it);
+    return f!=null&&l!=null&&f!==l&&it.gmv[l]<it.gmv[f];
+  }).sort((a,b)=>{
+    const ra=_iFirst(a)!=null?a.gmv[_iLast(a)]/a.gmv[_iFirst(a)]:1;
+    const rb=_iFirst(b)!=null?b.gmv[_iLast(b)]/b.gmv[_iFirst(b)]:1;
+    return ra-rb;
+  });
 
   // Aumento de Preço: compara sempre Jan(p[0]) vs Abr(p[3]) — referência fixa, ignora filtro de mês
   // para evitar comparar o mesmo mês vs ele mesmo quando período = 1 mês
@@ -2972,8 +2981,16 @@ function renderItemsEco(ss,ms,cur,prev){
   function sv(it){switch(itemSortBy2){case'units':return itmUnits(it);case'share':return itmGmv(it);case'price':return itmPrice(it)||0;case'mom':return parseFloat(itmMom(it))||0;default:return itmGmv(it);}}
   const mk2=rows=>IT_HEAD2+'<tbody>'+rows.map((it,i)=>itRow2(it,itmGmv(it),itmUnits(it),itmPrice(it),itmMom(it),itmShare(it),i+1)).join('')+'</tbody>';
   const firstMi=ms[0];
+  const _iF2=it=>[0,1,2,3].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
+  const _iL2=it=>[3,2,1,0].find(i=>it.gmv[i]!=null&&it.gmv[i]>0);
   const top2=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sv(b)-sv(a));
-  const q2=[...filtered].filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi]).sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
+  const q2=[...filtered].filter(it=>{
+    const f=_iF2(it),l=_iL2(it);return f!=null&&l!=null&&f!==l&&it.gmv[l]<it.gmv[f];
+  }).sort((a,b)=>{
+    const ra=_iF2(a)!=null?a.gmv[_iL2(a)]/a.gmv[_iF2(a)]:1;
+    const rb=_iF2(b)!=null?b.gmv[_iL2(b)]/b.gmv[_iF2(b)]:1;
+    return ra-rb;
+  });
   const _pr2=it=>{const pA=it.p[3],pJ=it.p[0];if(pA&&pJ&&pA>pJ)return(pA-pJ)/pJ;const tA=it.gmv[3]&&it.units[3]?it.gmv[3]/it.units[3]:null,tJ=it.gmv[0]&&it.units[0]?it.gmv[0]/it.units[0]:null;if(tA&&tJ&&tA>tJ*1.02)return(tA-tJ)/tJ;return null;};
   const _pw2=filtered.map(it=>({it,d:_pr2(it)})).filter(x=>x.d!==null);
   const p2=_pw2.length>=3?_pw2.sort((a,b)=>b.d-a.d).map(x=>x.it):[...filtered].filter(it=>it.p[3]||it.p[2]||it.p[1]||it.p[0]).sort((a,b)=>(b.p[3]||b.p[2]||b.p[1]||b.p[0]||0)-(a.p[3]||a.p[2]||a.p[1]||a.p[0]||0));
