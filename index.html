@@ -2464,8 +2464,16 @@ function renderItems(){
 
   const itmGmv  =it=>ms.reduce((a,mi)=>a+(it.gmv[mi]||0),0);
   const itmUnits=it=>ms.reduce((a,mi)=>a+(it.units[mi]||0),0);
-  const itmPrice=it=>{const v=ms.map(mi=>it.p[mi]).filter(v=>v!=null);return v[v.length-1]||null;};
-  const itmMom  =it=>{const c=it.gmv[cur]||0,p=prev!=null?(it.gmv[prev]||0):null;return p!=null?momMTD(c,p,prev,cur):null;};
+  // Preço: último mês com preço válido (>1 para evitar dados errados do BQ)
+  const itmPrice=it=>{const v=[3,2,1,0].map(mi=>it.p[mi]).filter(v=>v!=null&&v>1);return v[0]||null;};
+  // MoM: usa os 2 últimos meses com dados reais do item (não depende de cur/prev do filtro)
+  const itmMom=it=>{
+    const avail=[3,2,1,0].filter(mi=>it.gmv[mi]!=null&&it.gmv[mi]>0);
+    if(avail.length<2)return null;
+    const last=avail[0],prev2=avail[1];
+    const c=it.gmv[last],p=it.gmv[prev2];
+    return p>0?Math.round((c-p)/p*100):null;
+  };
 
   const totalItGmv=filtered.reduce((a,it)=>a+itmGmv(it),0);
   const itmShare=it=>totalItGmv>0?itmGmv(it)/totalItGmv*100:null;
@@ -2961,7 +2969,8 @@ function renderItemsEco(ss,ms,cur,prev){
   const filtered=ITEMS.filter(it=>selNm.has(it.sel));
   const itmGmv=it=>ms.reduce((a,mi)=>a+(it.gmv[mi]||0),0);
   const itmUnits=it=>ms.reduce((a,mi)=>a+(it.units[mi]||0),0);
-  const itmPrice=it=>{const v=ms.map(mi=>it.p[mi]).filter(v=>v!=null);return v[v.length-1]||null;};
+  // Preço: último mês com preço válido (>1 para evitar dados errados do BQ)
+  const itmPrice=it=>{const v=[3,2,1,0].map(mi=>it.p[mi]).filter(v=>v!=null&&v>1);return v[0]||null;};
   const itmMom=it=>{const c=it.gmv[cur]||0,p=prev!=null?(it.gmv[prev]||0):null;return p!=null?momMTD(c,p,prev,cur):null;};
   const totalItGmv=filtered.reduce((a,it)=>a+itmGmv(it),0);
   const itmShare=it=>totalItGmv>0?itmGmv(it)/totalItGmv*100:null;
