@@ -443,18 +443,23 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
       <div class="sec-hd" style="flex-wrap:wrap;gap:10px">
         <div>
           <div class="sec-title">Itens Analisados no BPC</div>
-          <div class="sec-sub">Visitas mensais Expensive e Cheaper por item · Seller × Domínio · Oportunidade = alto Cheaper + baixo Expensive</div>
+          <div class="sec-sub">Agrupado por Seller · visitas mensais + share do mês · dados por domínio (Seller × Domínio do BQ)</div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:700;color:var(--gr)">Ordenar por:</span>
-          <select id="bpcOffSort" onchange="_renderBpcOffTable()" style="padding:5px 10px;border-radius:7px;border:1.5px solid var(--bd);font-family:inherit;font-size:11px;font-weight:600;background:#fff;cursor:pointer">
-            <option value="exp_abr">Expensive — Abr (↓)</option>
-            <option value="cheap_abr">Cheaper — Abr (↓)</option>
-            <option value="pct_exp">% Expensive (↓)</option>
-            <option value="pct_cheap">% Cheaper (↓)</option>
-            <option value="relevance">Relevância (↓)</option>
-            <option value="opportunity">Oportunidade (↓)</option>
-          </select>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;gap:5px">
+            <button class="chart-mode-btn on" id="btnBpcShippers" onclick="setBpcView('shippers')">🟢 Shippers</button>
+            <button class="chart-mode-btn" id="btnBpcExpensive" onclick="setBpcView('expensive')">🔴 Expensive</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:700;color:var(--gr)">Ordenar:</span>
+            <select id="bpcOffSort" onchange="_renderBpcOffTable()" style="padding:4px 8px;border-radius:7px;border:1.5px solid var(--bd);font-family:inherit;font-size:11px;font-weight:600;background:#fff;cursor:pointer">
+              <option value="vol_abr">Volume — Abr ↓</option>
+              <option value="share_abr">Share — Abr ↓</option>
+              <option value="vol_jan">Volume — Jan ↓</option>
+              <option value="pct">% Expensive ↓</option>
+              <option value="opportunity">Oportunidade ↓</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="card" style="overflow-x:auto"><table class="tbl" id="tBpcOff"></table></div>
@@ -2423,13 +2428,18 @@ const BPC_VISITS_MAP={
   '1479401290_MLB-MATTRESSES':                  {match:4081721, exp:1731809, cheap:2349912, pctExp:42.4},
 };
 
-var bpcOffMode='exp'; // 'exp' = expensive | 'cheap' = cheaper
-var _renderBpcOffTable=function(){}; // será sobrescrita no renderTab2
+var bpcOffMode='exp';
+var bpcView='shippers'; // 'shippers' = cheaper | 'expensive'
+var _renderBpcOffTable=function(){};
+
 function setBpcOffMode(mode){
   bpcOffMode=mode;
-  document.getElementById('btnOffExp').classList.toggle('on',mode==='exp');
-  document.getElementById('btnOffCheap').classList.toggle('on',mode==='cheap');
-  // Re-renderiza apenas a tabela de ofensores
+  if(typeof _renderBpcOffTable==='function')_renderBpcOffTable();
+}
+function setBpcView(view){
+  bpcView=view;
+  document.getElementById('btnBpcShippers').classList.toggle('on',view==='shippers');
+  document.getElementById('btnBpcExpensive').classList.toggle('on',view==='expensive');
   if(typeof _renderBpcOffTable==='function')_renderBpcOffTable();
 }
 
@@ -2848,93 +2858,99 @@ function renderTab2(){
   const rM=ms.map(mi=>{const rg=ss.filter(s=>s.bpc[mi]!=null&&s.bpc[mi]<80).reduce((a,s)=>a+(s.gmv[mi]||0),0);const tg=ss.reduce((a,s)=>a+(s.gmv[mi]||0),0);return tg?+(rg/tg*100).toFixed(1):0;});
   charts['cGmvRisk']?.destroy();
   charts['cGmvRisk']=new Chart(document.getElementById('cGmvRisk'),{type:'bar',data:{labels:ms.map(i=>MN[i]),datasets:[{label:'% GMV em Risco',data:rM,backgroundColor:rM.map(v=>v>60?R+'bb':v>40?Y+'bb':G+'bb'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}% do GMV abaixo de 80% BPC`}}},scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
-  // Itens Analisados no BPC — redesign completo
+  // Itens Analisados no BPC — agrupado por Seller × Domínio
   _renderBpcOffTable=(function(){
-    const _cur=cur,_prev=prev,_ss=ss;
+    const _ss=ss;
     return function(){
       const off=document.getElementById('tBpcOff');
       if(!off)return;
-      const sortBy=document.getElementById('bpcOffSort')?.value||'exp_abr';
-      const mn=['Jan','Fev','Mar','Abr'];
+      const sortBy=document.getElementById('bpcOffSort')?.value||'vol_abr';
+      const isShippers=bpcView==='shippers'; // shippers = cheaper
+      const MN=['Jan','Fev','Mar','Abr'];
+      const modeCol=isShippers?G:R;
+      const modeLabel=isShippers?'Shippers (Cheaper)':'Expensive';
 
-      // Calcula relevância: domain_visits_total / soma_total_portfolio
-      const selCids=_ss&&_ss.length?new Set(_ss.map(s=>s.cid)):null;
-      const allItems=[...BPC_OFF];
-      const relevItems=selCids?allItems.filter(it=>selCids.has(it.cid)):allItems;
-      const totalVisits=relevItems.reduce((a,it)=>{
-        const vm=BPC_VISITS_MONTHLY[it.cid+'_'+it.domain];
-        return a+(vm?vm.match.reduce((s,v)=>s+(v||0),0):0);
-      },0);
-
-      // Enriquece cada item com dados de visitas
-      const enriched=allItems.map(it=>{
+      // ── Agrupa BPC_OFF por seller×domínio ──
+      const groups={};
+      BPC_OFF.forEach(it=>{
         const key=it.cid+'_'+it.domain;
-        const vm=BPC_VISITS_MONTHLY[key];
-        const ytdMatch=vm?vm.match.reduce((a,v)=>a+(v||0),0):0;
-        const ytdExp=vm?vm.exp.reduce((a,v)=>a+(v||0),0):0;
-        const ytdCheap=vm?vm.cheap.reduce((a,v)=>a+(v||0),0):0;
-        const pctExp=ytdMatch>0?+(ytdExp/ytdMatch*100).toFixed(1):null;
-        const pctCheap=ytdMatch>0?+(ytdCheap/ytdMatch*100).toFixed(1):null;
-        const relevance=totalVisits>0?+(ytdMatch/totalVisits*100).toFixed(1):0;
-        // Oportunidade: alto cheaper + baixo expensive = crescimento
-        const oppScore=pctCheap!=null&&pctExp!=null?pctCheap-pctExp:0;
-        const opp=oppScore>30?'🟢 Alta':oppScore>0?'🟡 Média':'🔴 Baixa';
-        return{...it,vm,ytdMatch,ytdExp,ytdCheap,pctExp,pctCheap,relevance,oppScore,opp};
+        if(!groups[key]) groups[key]={cid:it.cid,sel:it.sel,domain:it.domain,items:[]};
+        groups[key].items.push(it);
       });
 
-      // Ordenação
-      enriched.sort((a,b)=>{
+      // ── Enriquece cada grupo com visitas ──
+      const rows=Object.values(groups).map(g=>{
+        const vm=BPC_VISITS_MONTHLY[g.cid+'_'+g.domain];
+        const vol=isShippers?(vm?vm.cheap:[null,null,null,null]):(vm?vm.exp:[null,null,null,null]);
+        const match=vm?vm.match:[null,null,null,null];
+        const ytdVol=vol.reduce((a,v)=>a+(v||0),0);
+        const ytdMatch=match.reduce((a,v)=>a+(v||0),0);
+        const ytdExp=vm?vm.exp.reduce((a,v)=>a+(v||0),0):0;
+        const pctExp=ytdMatch>0?+(ytdExp/ytdMatch*100).toFixed(1):null;
+        const pctCheap=ytdMatch>0?+((ytdMatch-ytdExp)/ytdMatch*100).toFixed(1):null;
+        const oppScore=pctCheap!=null&&pctExp!=null?pctCheap-pctExp:0;
+        return{...g,vm,vol,match,ytdVol,ytdMatch,pctExp,pctCheap,oppScore};
+      });
+
+      // ── Share: vol[i] / sum_of_all_groups_vol[i] ──
+      const monthTotal=MN.map((_,i)=>rows.reduce((a,r)=>a+(r.vol[i]||0),0));
+
+      // ── Relevância: ytdMatch / total ytdMatch ──
+      const grandTotal=rows.reduce((a,r)=>a+r.ytdMatch,0);
+      rows.forEach(r=>{ r.relevance=grandTotal>0?+(r.ytdMatch/grandTotal*100).toFixed(1):0; });
+
+      // ── Ordenação ──
+      rows.sort((a,b)=>{
         switch(sortBy){
-          case'cheap_abr': return(b.vm?.cheap[3]||0)-(a.vm?.cheap[3]||0);
-          case'pct_exp':   return(b.pctExp||0)-(a.pctExp||0);
-          case'pct_cheap': return(b.pctCheap||0)-(a.pctCheap||0);
-          case'relevance': return b.relevance-a.relevance;
-          case'opportunity':return b.oppScore-a.oppScore;
-          default:         return(b.vm?.exp[3]||0)-(a.vm?.exp[3]||0); // exp_abr
+          case'vol_jan':     return(b.vol[0]||0)-(a.vol[0]||0);
+          case'share_abr':   return((b.vol[3]||0)/(monthTotal[3]||1))-((a.vol[3]||0)/(monthTotal[3]||1));
+          case'pct':         return(b.pctExp||0)-(a.pctExp||0);
+          case'opportunity': return b.oppScore-a.oppScore;
+          default:           return(b.vol[3]||0)-(a.vol[3]||0); // vol_abr
         }
       });
 
-      // Cabeçalho
+      // ── Cabeçalho ──
+      const maxVol=Math.max(...rows.flatMap(r=>r.vol.map(v=>v||0)));
       off.innerHTML=`<thead><tr>
-        <th>Item</th><th>Seller</th><th>Domínio</th>
-        ${mn.map(m=>`<th style="color:${R+'99'}">${m} Exp</th>`).join('')}
-        ${mn.map(m=>`<th style="color:${G+'99'}">${m} Cheap</th>`).join('')}
-        <th>% Exp</th><th>% Cheap</th>
+        <th>Seller</th><th>Itens no BPC</th>
+        ${MN.map(m=>`<th style="color:${modeCol}">Visitas ${m}</th><th>Share ${m}</th>`).join('')}
+        <th>% Expensive</th><th>% Shippers</th>
         <th>Relevância</th><th>Oportunidade</th>
       </tr></thead>`;
 
       const tb=document.createElement('tbody');
-      enriched.forEach(it=>{
-        const vm=it.vm;
-        // Barras de visitas (mini bar inline)
-        function visitBar(v,maxV,col){
-          if(!v||!maxV)return'<div style="height:4px;background:#F0F2F5;border-radius:2px"></div>';
-          const w=Math.round(v/maxV*100);
-          return`<div style="height:4px;background:#F0F2F5;border-radius:2px;overflow:hidden"><div style="width:${w}%;height:100%;background:${col};border-radius:2px"></div></div>`;
-        }
-        const maxExp=Math.max(...enriched.map(x=>x.vm?Math.max(...x.vm.exp.map(v=>v||0)):0));
-        const maxCheap=Math.max(...enriched.map(x=>x.vm?Math.max(...x.vm.cheap.map(v=>v||0)):0));
-        const pctExpCol=it.pctExp==null?'#aaa':it.pctExp>40?R:it.pctExp>25?Y:G;
-        const pctChpCol=it.pctCheap==null?'#aaa':it.pctCheap>75?G:it.pctCheap>50?Y:R;
+      rows.forEach(r=>{
+        // Lista de itens compacta
+        const itemsList=r.items.map(it=>
+          `<span style="display:inline-block;font-size:9px;background:#F0F2F5;border-radius:4px;padding:1px 5px;margin:1px">${itemLink(it.id,it.nm?it.nm.slice(0,28):'MLB'+it.id,it)}</span>`
+        ).join('');
+        const pctExpCol=r.pctExp==null?'#aaa':r.pctExp>40?R:r.pctExp>25?Y:G;
+        const pctChpCol=r.pctCheap==null?'#aaa':r.pctCheap>75?G:r.pctCheap>50?Y:R;
+        const opp=r.oppScore>30?'🟢 Alta':r.oppScore>0?'🟡 Média':'🔴 Baixa';
+
         let row=`<tr>
-          <td>${itemLink(it.id,it.nm,it)}<br><span style="font-size:9px;color:var(--gr);font-family:monospace">${fmtItemId(it.id)}</span></td>
-          <td style="font-size:11px;font-weight:600">${it.sel}</td>
-          <td style="font-size:10px;color:var(--gr)">${it.domain.replace('MLB-','')}</td>`;
-        // Colunas Expensive mensais
+          <td><strong style="font-size:12px">${r.sel}</strong><br><span style="font-size:9px;color:var(--gr)">${r.domain.replace('MLB-','')}</span></td>
+          <td style="max-width:200px;white-space:normal">${itemsList}</td>`;
+
+        // Meses: visitas + share + barra
         for(let i=0;i<4;i++){
-          const v=vm?vm.exp[i]:null;
-          row+=`<td style="font-size:10px"><div>${v!=null?fmtVisits(v):'—'}</div>${visitBar(v,maxExp,R+'66')}</td>`;
+          const v=r.vol[i],tot=monthTotal[i];
+          const share=v&&tot?+(v/tot*100).toFixed(1):null;
+          const barW=v&&maxVol?Math.round(v/maxVol*100):0;
+          row+=`<td>
+            <div style="font-size:11px;font-weight:700">${v!=null?fmtVisits(v):'—'}</div>
+            <div style="background:#F0F2F5;border-radius:3px;height:5px;margin-top:2px;overflow:hidden">
+              <div style="width:${barW}%;height:100%;background:${modeCol}cc;border-radius:3px"></div>
+            </div>
+          </td>
+          <td><span style="font-weight:800;color:${modeCol};font-size:11px">${share!=null?share+'%':'—'}</span></td>`;
         }
-        // Colunas Cheaper mensais
-        for(let i=0;i<4;i++){
-          const v=vm?vm.cheap[i]:null;
-          row+=`<td style="font-size:10px"><div>${v!=null?fmtVisits(v):'—'}</div>${visitBar(v,maxCheap,G+'66')}</td>`;
-        }
-        // % e relevância
-        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctExpCol}">${it.pctExp!=null?it.pctExp+'%':'—'}</span></td>`;
-        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctChpCol}">${it.pctCheap!=null?it.pctCheap+'%':'—'}</span></td>`;
-        row+=`<td style="font-weight:700;color:var(--b)">${it.relevance}%</td>`;
-        row+=`<td style="font-size:13px">${it.opp}</td>`;
+
+        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctExpCol}">${r.pctExp!=null?r.pctExp+'%':'—'}</span></td>`;
+        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctChpCol}">${r.pctCheap!=null?r.pctCheap+'%':'—'}</span></td>`;
+        row+=`<td style="font-weight:700;color:var(--b)">${r.relevance}%</td>`;
+        row+=`<td style="font-size:13px">${opp}</td>`;
         row+=`</tr>`;
         tb.innerHTML+=row;
       });
