@@ -454,7 +454,17 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
 
     <!-- Itens Ofensores -->
     <div class="section" id="s2-ofensores">
-      <div class="sec-hd"><div class="sec-title">Itens Ofensores de BPC</div><div class="sec-sub">Itens que mais prejudicam a competitividade — ordenados por BPC crescente</div></div>
+      <div class="sec-hd" style="flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="sec-title">Itens Ofensores de BPC</div>
+          <div class="sec-sub">Itens que mais prejudicam a competitividade · volume de visitas por domínio (Seller × Domínio)</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:10px;font-weight:700;color:var(--gr)">Visitas:</span>
+          <button class="chart-mode-btn on" id="btnOffExp" onclick="setBpcOffMode('exp')">🔴 Expensive</button>
+          <button class="chart-mode-btn" id="btnOffCheap" onclick="setBpcOffMode('cheap')">🟢 Cheaper</button>
+        </div>
+      </div>
       <div class="card" style="overflow-x:auto"><table class="tbl" id="tBpcOff"></table></div>
     </div>
 
@@ -2401,6 +2411,36 @@ function renderReputacao(ss, ms, cur){
   );
 }
 
+// ─── VISITAS POR SELLER × DOMÍNIO (YTD 2026) — para Itens Ofensores de BPC ───
+// Fonte: LK_COMP_FAVORABILITIES · BOX_ALL_ABC · DAY granularity
+// key: `${cid}_${domain}` → {match, exp, cheap, pctExp}
+const BPC_VISITS_MAP={
+  '213658244_MLB-MATTRESSES':                   {match:53801633,exp:24642364,cheap:29159268,pctExp:45.8},
+  '213658244_MLB-BOX_SPRING_AND_MATTRESS_KITS': {match:6960355, exp:2996715, cheap:3963641, pctExp:43.1},
+  '213658244_MLB-AIR_MATTRESSES':               {match:27755,   exp:15368,   cheap:12387,   pctExp:55.4},
+  '213658244_MLB-EXERCISE_AND_YOGA_MATS':       {match:2017950, exp:893032,  cheap:1124918, pctExp:44.3},
+  '361841053_MLB-BOX_SPRING_AND_MATTRESS_KITS': {match:195480,  exp:4303,    cheap:191178,  pctExp:2.2},
+  '361841053_MLB-MATTRESSES':                   {match:42816,   exp:3012,    cheap:39804,   pctExp:7.0},
+  '622556468_MLB-BOX_SPRING_AND_MATTRESS_KITS': {match:37343281,exp:11177058,cheap:26166223,pctExp:29.9},
+  '622556468_MLB-MATTRESSES':                   {match:5136012, exp:1585175, cheap:3550837, pctExp:30.9},
+  '1017072559_MLB-MATTRESSES':                  {match:17552284,exp:8659638, cheap:8892646, pctExp:49.3},
+  '1176215393_MLB-BOX_SPRING_AND_MATTRESS_KITS':{match:1149240, exp:135298,  cheap:1013941, pctExp:11.8},
+  '1176215393_MLB-MATTRESSES':                  {match:17608541,exp:257339,  cheap:17351203,pctExp:1.5},
+  '1223087781_MLB-BOX_SPRING_AND_MATTRESS_KITS':{match:20984490,exp:4575677, cheap:16408813,pctExp:21.8},
+  '1223087781_MLB-MATTRESSES':                  {match:1228510, exp:791162,  cheap:437348,  pctExp:64.4},
+  '1479401290_MLB-MATTRESSES':                  {match:4081721, exp:1731809, cheap:2349912, pctExp:42.4},
+};
+
+var bpcOffMode='exp'; // 'exp' = expensive | 'cheap' = cheaper
+var _renderBpcOffTable=function(){}; // será sobrescrita no renderTab2
+function setBpcOffMode(mode){
+  bpcOffMode=mode;
+  document.getElementById('btnOffExp').classList.toggle('on',mode==='exp');
+  document.getElementById('btnOffCheap').classList.toggle('on',mode==='cheap');
+  // Re-renderiza apenas a tabela de ofensores
+  if(typeof _renderBpcOffTable==='function')_renderBpcOffTable();
+}
+
 /* ═══ VISITS EXPENSIVE / CHEAPER ═══ */
 // Fonte: LK_COMP_FAVORABILITIES · BOX_ALL_ABC · DAY granularity · Jan-Abr 2026
 // [Jan, Fev, Mar, Abr] · match=total visitas matcheadas · exp=Meli mais caro · cheap=Meli competitivo
@@ -2868,31 +2908,56 @@ function renderTab2(){
   const rM=ms.map(mi=>{const rg=ss.filter(s=>s.bpc[mi]!=null&&s.bpc[mi]<80).reduce((a,s)=>a+(s.gmv[mi]||0),0);const tg=ss.reduce((a,s)=>a+(s.gmv[mi]||0),0);return tg?+(rg/tg*100).toFixed(1):0;});
   charts['cGmvRisk']?.destroy();
   charts['cGmvRisk']=new Chart(document.getElementById('cGmvRisk'),{type:'bar',data:{labels:ms.map(i=>MN[i]),datasets:[{label:'% GMV em Risco',data:rM,backgroundColor:rM.map(v=>v>60?R+'bb':v>40?Y+'bb':G+'bb'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}% do GMV abaixo de 80% BPC`}}},scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
-  // BPC Offenders
-  const off=document.getElementById('tBpcOff');
-  off.innerHTML=`<thead><tr><th>Item ID</th><th>Título</th><th>Status</th><th>Seller</th><th>Cust ID</th><th>Domínio</th><th>BPC</th><th>Part. Carteira</th><th>Var MoM</th><th>Tendência</th></tr></thead>`;
-  const otb=document.createElement('tbody');
-  [...BPC_OFF].sort((a,b)=>a.bpc_i[cur]-b.bpc_i[cur]).forEach(it=>{
-    const b=it.bpc_i[cur],bp=prev!=null?it.bpc_i[prev]:null;
-    const mm=bp!=null?+(b-bp).toFixed(2):null;
-    const allVals=it.bpc_i.filter(v=>v!=null);
-    const isWorsening=allVals.length>1&&allVals.every((v,i,a)=>i===0||v<=a[i-1]);
-    const trend=isWorsening?'⬇ Piora contínua':mm!=null&&mm>0?'↑ Melhorando':'→ Estável';
-    const tc=isWorsening?'br':mm!=null&&mm>0?'bg':'bb';
-    otb.innerHTML+=`<tr>
-      <td style="font-size:10px;font-family:monospace;color:var(--gr)">${fmtItemId(it.id)}</td>
-      <td>${itemLink(it.id,it.nm,it)}</td>
-      <td>${statusBadge(it.status)}</td>
-      <td style="font-size:11px;color:var(--gr)">${it.sel}</td>
-      <td style="font-size:10px;font-family:monospace;color:var(--gr)">${it.cid}</td>
-      <td style="font-size:11px;color:var(--gr)">${it.domain}</td>
-      <td><span style="display:inline-block;padding:3px 8px;border-radius:5px;background:${heatBg(b*100)};color:#fff;font-weight:700;font-size:11px">${(b*100).toFixed(1)}%</span></td>
-      <td style="font-weight:700">${it.part[cur].toFixed(1)}%</td>
-      <td><span class="d ${mm==null?'fl':mm>0?'up':'dn'}">${mm!=null?(mm>0?'+':'')+fmtP(mm*100):'—'}</span></td>
-      <td><span class="badge ${tc}">${trend}</span></td>
-    </tr>`;
-  });
-  off.appendChild(otb);
+  // BPC Offenders — armazena cur/prev para re-render no toggle
+  _renderBpcOffTable=(function(){
+    const _cur=cur,_prev=prev;
+    return function(){
+      const isExp=bpcOffMode==='exp';
+      const off=document.getElementById('tBpcOff');
+      if(!off)return;
+      const vLbl=isExp?'Visitas Expensive':'Visitas Cheaper';
+      const pLbl=isExp?'% Expensive':'% Cheaper';
+      off.innerHTML=`<thead><tr>
+        <th>Item ID</th><th>Título</th><th>Status</th><th>Seller</th><th>Cust ID</th><th>Domínio</th>
+        <th>BPC Item</th><th>Part. Carteira</th>
+        <th>Visitas Match</th><th>${vLbl}</th><th>${pLbl}</th>
+        <th>Var BPC MoM</th><th>Tendência</th>
+      </tr></thead>`;
+      const otb=document.createElement('tbody');
+      [...BPC_OFF].sort((a,b)=>a.bpc_i[_cur]-b.bpc_i[_cur]).forEach(it=>{
+        const b=it.bpc_i[_cur],bp=_prev!=null?it.bpc_i[_prev]:null;
+        const mm=bp!=null?+(b-bp).toFixed(2):null;
+        const allVals=it.bpc_i.filter(v=>v!=null);
+        const isWorsening=allVals.length>1&&allVals.every((v,i,a)=>i===0||v<=a[i-1]);
+        const trend=isWorsening?'⬇ Piora contínua':mm!=null&&mm>0?'↑ Melhorando':'→ Estável';
+        const tc=isWorsening?'br':mm!=null&&mm>0?'bg':'bb';
+        // Visitas do domínio do item
+        const vKey=it.cid+'_'+it.domain;
+        const vd=BPC_VISITS_MAP[vKey];
+        const vMatch=vd?Math.round(vd.match/1000)+'K':'—';
+        const vExpCheap=vd?(isExp?Math.round(vd.exp/1000)+'K':Math.round(vd.cheap/1000)+'K'):'—';
+        const vPct=vd?(isExp?vd.pctExp+'%':+(100-vd.pctExp).toFixed(1)+'%'):'—';
+        const vPctColor=vd?(isExp?(vd.pctExp>40?R:vd.pctExp>25?Y:G):(100-vd.pctExp>75?G:(100-vd.pctExp)>50?Y:R)):'#aaa';
+        otb.innerHTML+=`<tr>
+          <td style="font-size:10px;font-family:monospace;color:var(--gr)">${fmtItemId(it.id)}</td>
+          <td>${itemLink(it.id,it.nm,it)}</td>
+          <td>${statusBadge(it.status)}</td>
+          <td style="font-size:11px;color:var(--gr)">${it.sel}</td>
+          <td style="font-size:10px;font-family:monospace;color:var(--gr)">${it.cid}</td>
+          <td style="font-size:11px;color:var(--gr)">${it.domain}</td>
+          <td><span style="display:inline-block;padding:3px 8px;border-radius:5px;background:${heatBg(b*100)};color:#fff;font-weight:700;font-size:11px">${(b*100).toFixed(1)}%</span></td>
+          <td style="font-weight:700">${it.part[_cur].toFixed(1)}%</td>
+          <td style="font-size:11px;color:#555">${vMatch}</td>
+          <td style="font-weight:700;color:#333">${vExpCheap}</td>
+          <td><span style="font-weight:800;color:${vPctColor}">${vPct}</span></td>
+          <td><span class="d ${mm==null?'fl':mm>0?'up':'dn'}">${mm!=null?(mm>0?'+':'')+fmtP(mm*100):'—'}</span></td>
+          <td><span class="badge ${tc}">${trend}</span></td>
+        </tr>`;
+      });
+      off.appendChild(otb);
+    };
+  })();
+  _renderBpcOffTable();
 }
 
 /* ═══ TAB 3: ECOSSISTEMA ═══ */
