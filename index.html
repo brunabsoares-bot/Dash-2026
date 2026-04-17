@@ -1012,8 +1012,6 @@ function render(){
   renderKpis(ss,ms,cur,prev,gmvKey,ordKey);
   renderVendas(ss,ms,cur,prev,gmvKey);
   renderSellerTable(ss,cur,prev,gmvKey,ordKey);
-  renderLogistics(ss);
-  renderPayment(ss);
   renderItems();
   try{renderMetas(ss,ms,cur);}catch(e){console.error('renderMetas erro:',e);document.getElementById('s-metas').style.border='2px solid red';}
   renderReputacao(ss,ms,cur);
@@ -1419,7 +1417,9 @@ function renderClips(ss,ms,cur){
 const MELI_YELLOW='#FFE600',MELI_ORANGE='#FF6900';
 
 function renderMetas(ss,ms,cur){
-  // Constrói lista: percorre METAS com for...in para evitar qualquer issue com entries/map
+  // DEBUG VISUAL — remover depois
+  var _dbg=document.getElementById('metaKpis');
+  if(_dbg){_dbg.innerHTML='<div style="grid-column:1/-1;padding:10px;background:#ffe;border:1px solid #f90;font-size:12px">DEBUG: renderMetas chamado · ms='+JSON.stringify(ms)+'</div>';}
   var metaSellers=[];
   for(var cidStr in METAS){
     var m=METAS[cidStr];
@@ -1439,6 +1439,7 @@ function renderMetas(ss,ms,cur){
     var pctDes=metaDes>0?Math.round(gmvReal/metaDes*100):0;
     metaSellers.push({cid:cid,nm:m.nm,s:seller,gmvReal:gmvReal,metaFin:metaFin,metaDes:metaDes,pctFin:pctFin,pctDes:pctDes});
   }
+  if(_dbg){_dbg.innerHTML+='<div style="grid-column:1/-1;padding:10px;background:#ffe;border:1px solid #090;font-size:12px">metaSellers.length='+metaSellers.length+' · ex: '+(metaSellers[0]?metaSellers[0].nm+' gmv='+metaSellers[0].gmvReal:'vazio')+'</div>';}
 
   // Helpers
   function barCol(pct){if(pct>=100)return B;if(pct>=80)return Y;return R;}
