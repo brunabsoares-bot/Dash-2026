@@ -94,6 +94,9 @@ input:checked+.meta-slider{background:var(--b);}
 input:checked+.meta-slider:before{transform:translateX(17px);}
 .col-fin{transition:opacity .2s;}
 .col-fin.hidden{display:none;}
+/* Chart mode toggle */
+.chart-mode-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--bd);background:#fff;font-size:11px;font-weight:600;color:#666;cursor:pointer;transition:all .15s;}
+.chart-mode-btn.on{background:var(--nv);color:#fff;border-color:var(--nv);}
 /* Atingimento gauge cell */
 .at-gauge{display:flex;align-items:center;gap:6px;}
 .at-pct{font-size:15px;font-weight:900;min-width:44px;}
@@ -287,8 +290,16 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
       </div>
       <!-- Gráfico -->
       <div class="card">
-        <div class="card-title">% Atingimento vs Meta Desafio — por Seller</div>
-        <div class="card-sub">Barra = % atingimento · Linha pontilhada = 100% · MoM ao lado · YoY como referência</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="card-title">Performance vs Meta Desafio — por Seller</div>
+            <div class="card-sub" id="chartModeSub">Gap R$ = impacto financeiro real · vermelho = abaixo · verde = acima · MoM ao lado</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="chart-mode-btn on" id="btnChartGap" onclick="setChartMode('gap')">📊 Gap (R$)</button>
+            <button class="chart-mode-btn" id="btnChartPct" onclick="setChartMode('pct')">📈 % Atingimento</button>
+          </div>
+        </div>
         <div style="height:320px"><canvas id="cMetas"></canvas></div>
       </div>
       <div class="sec-ins" id="si-metas"></div>
@@ -1450,7 +1461,21 @@ function statusBadgeMeta(f,d){
   return'<span class="badge br" style="padding:4px 9px">Abaixo</span>';
 }
 var showMetaFin=true;
+var chartMode='gap'; // 'gap' ou 'pct'
 var _mLast={ss:null,ms:null,cur:null,prev:null};
+
+function setChartMode(mode){
+  chartMode=mode;
+  document.getElementById('btnChartGap').classList.toggle('on',mode==='gap');
+  document.getElementById('btnChartPct').classList.toggle('on',mode==='pct');
+  var sub=document.getElementById('chartModeSub');
+  if(sub){
+    sub.textContent=mode==='gap'
+      ?'Gap R$ = impacto financeiro real · vermelho = abaixo · verde = acima · MoM ao lado'
+      :'% atingimento · linha 100% = meta · ordenado por performance · GMV e MoM ao lado';
+  }
+  if(_mLast.metaSellers)_renderMetasChart(_mLast.metaSellers,_mLast.ms,_mLast.cur,_mLast.prev);
+}
 
 function onToggleMetaFin(){
   showMetaFin=document.getElementById('toggleMetaFin').checked;
@@ -1605,101 +1630,194 @@ function renderMetas(ss,ms,cur,prev){
 }
 
 function _renderMetasChart(metaSellers,ms,cur,prev){
-  // Ordenado: melhor % desafio em cima
-  var sorted=metaSellers.slice().sort(function(a,b){return a.pctDes-b.pctDes;});
+  charts['cMetas']&&charts['cMetas'].destroy();
+  if(chartMode==='gap'){_renderGapChart(metaSellers);}
+  else{_renderPctChart(metaSellers);}
+}
 
-  // Plugin: labels MoM e GMV nas barras
-  var momPlugin={
-    id:'momP',
+/* ── VERSÃO 1: Gap R$ (diverging bar) ── */
+function _renderGapChart(metaSellers){
+  // Ordenado: maior gap negativo primeiro (mais crítico no topo visual = embaixo do array)
+  var sorted=metaSellers.slice().sort(function(a,b){
+    return (a.gmvReal-a.metaDes)-(b.gmvReal-b.metaDes);
+  });
+  var gaps=sorted.map(function(d){return d.gmvReal-d.metaDes;});
+
+  // Plugin: labels à direita da barra
+  var labelP={
+    id:'gapLbl',
     afterDraw:function(chart){
       var ctx=chart.ctx;
-      var meta=chart.getDatasetMeta(0);
-      meta.data.forEach(function(bar,i){
+      var xs=chart.scales.x;
+      var x0=xs.getPixelForValue(0);
+      chart.getDatasetMeta(0).data.forEach(function(bar,i){
         var d=sorted[i];
-        if(!d)return;
-        // GMV Real label
+        var gap=gaps[i];
+        var labelX=gap>=0?bar.x+7:x0+7; // sempre à direita do zero
+        var y=bar.y;
         ctx.save();
-        ctx.font='700 10px Inter,sans-serif';
-        ctx.fillStyle='#333';
+        // % atingimento (destaque)
+        ctx.font='800 11px Inter,sans-serif';
+        ctx.fillStyle=colByPct(d.pctDes);
         ctx.textAlign='left';
-        ctx.fillText(fmtM(d.gmvReal), bar.x+8, bar.y-4);
-        // MoM badge
+        ctx.fillText(d.pctDes+'%',labelX,y-6);
+        // GMV Real
+        ctx.font='600 10px Inter,sans-serif';
+        ctx.fillStyle='#444';
+        ctx.fillText(fmtM(d.gmvReal),labelX+34,y-6);
+        // MoM
         if(d.momPct!=null){
-          var mStr=(d.momPct>=0?'+':'')+d.momPct+'% MoM';
           ctx.font='600 9px Inter,sans-serif';
           ctx.fillStyle=d.momPct>=0?G:R;
-          ctx.fillText(mStr, bar.x+8, bar.y+10);
+          ctx.fillText((d.momPct>=0?'▲':'▼')+Math.abs(d.momPct)+'% MoM',labelX,y+8);
         }
         ctx.restore();
       });
     }
   };
 
-  // Dataset principal: % atingimento Meta Desafio
-  var desDs={
-    label:'% Meta Desafio',
-    data:sorted.map(function(d){return d.pctDes;}),
-    backgroundColor:sorted.map(function(d){return colByPct(d.pctDes)+'cc';}),
-    borderRadius:5,
-    barThickness:22,
+  // Linha em 0
+  var refP={
+    id:'zeroLine',
+    afterDraw:function(chart){
+      var ctx=chart.ctx,xs=chart.scales.x,ys=chart.scales.y;
+      var x0=xs.getPixelForValue(0);
+      ctx.save();
+      ctx.strokeStyle='rgba(0,0,0,.5)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(x0,ys.top);ctx.lineTo(x0,ys.bottom);ctx.stroke();
+      ctx.font='700 9px Inter,sans-serif';
+      ctx.fillStyle='rgba(0,0,0,.45)';
+      ctx.textAlign='center';
+      ctx.fillText('Meta',x0,ys.top-5);
+      ctx.restore();
+    }
   };
-  var datasets=[desDs];
 
-  // Dataset Meta Financeira (quando visível)
-  if(showMetaFin){
-    datasets.push({
-      label:'% Meta Financeira',
-      data:sorted.map(function(d){return d.pctFin;}),
-      backgroundColor:sorted.map(function(d){return colByPct(d.pctFin)+'44';}),
-      borderRadius:3,
-      barThickness:10,
-    });
-  }
+  var maxAbs=Math.max.apply(null,gaps.map(function(g){return Math.abs(g)||1;}));
+  charts['cMetas']=new Chart(document.getElementById('cMetas'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(function(d){return d.nm;}),
+      datasets:[{
+        data:gaps,
+        backgroundColor:gaps.map(function(g){return g>=0?G+'bb':R+'bb';}),
+        borderRadius:4,
+        barThickness:20,
+      }]
+    },
+    plugins:[refP,labelP],
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      layout:{padding:{right:170,top:12}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:function(i){return sorted[i[0].dataIndex].nm;},
+          label:function(c){
+            var d=sorted[c.dataIndex];
+            var g=gaps[c.dataIndex];
+            return['Gap: '+(g>=0?'+':'')+fmtM(g),'GMV: '+fmtM(d.gmvReal),'Meta Des.: '+fmtM(d.metaDes),'Ating.: '+d.pctDes+'%'];
+          }
+        }}
+      },
+      scales:{
+        x:{
+          min:-maxAbs*1.15,
+          max:maxAbs*1.15,
+          ticks:{callback:function(v){return fmtMInt(v);},color:'#aaa',font:{size:9}},
+          grid:{color:'#F0F2F5'}
+        },
+        y:{grid:{display:false},ticks:{color:'#555',font:{size:11,weight:'600'}}}
+      }
+    }
+  });
+}
 
-  // Linha de referência 100%
-  var refPlugin={
-    id:'refLine',
+/* ── VERSÃO 2: % Atingimento (corrigida) ── */
+function _renderPctChart(metaSellers){
+  // Ordenado: pior primeiro (embaixo visual = topo do array)
+  var sorted=metaSellers.slice().sort(function(a,b){return a.pctDes-b.pctDes;});
+  var maxPct=Math.max.apply(null,sorted.map(function(d){return d.pctDes;}));
+  var chartMax=Math.ceil(Math.max(maxPct+10,110)/10)*10; // dinâmico, proporcional
+
+  var labelP={
+    id:'pctLbl',
     afterDraw:function(chart){
       var ctx=chart.ctx;
-      var xScale=chart.scales.x;
-      var yScale=chart.scales.y;
-      var x100=xScale.getPixelForValue(100);
+      chart.getDatasetMeta(0).data.forEach(function(bar,i){
+        var d=sorted[i];
+        var lx=bar.x+7;
+        ctx.save();
+        // GMV
+        ctx.font='700 10px Inter,sans-serif';
+        ctx.fillStyle='#333';
+        ctx.textAlign='left';
+        ctx.fillText(fmtM(d.gmvReal),lx,bar.y-5);
+        // MoM
+        if(d.momPct!=null){
+          ctx.font='600 9px Inter,sans-serif';
+          ctx.fillStyle=d.momPct>=0?G:R;
+          ctx.fillText((d.momPct>=0?'▲':'▼')+Math.abs(d.momPct)+'%',lx,bar.y+8);
+        }
+        ctx.restore();
+      });
+    }
+  };
+
+  var ref100={
+    id:'ref100',
+    afterDraw:function(chart){
+      var ctx=chart.ctx,xs=chart.scales.x,ys=chart.scales.y;
+      var x100=xs.getPixelForValue(100);
       ctx.save();
-      ctx.setLineDash([6,4]);
-      ctx.strokeStyle='rgba(0,0,0,.35)';
-      ctx.lineWidth=1.5;
-      ctx.beginPath();
-      ctx.moveTo(x100,yScale.top);
-      ctx.lineTo(x100,yScale.bottom);
-      ctx.stroke();
-      // Label "100% = Meta"
+      ctx.setLineDash([7,4]);
+      ctx.strokeStyle='rgba(0,0,0,.4)';
+      ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(x100,ys.top);ctx.lineTo(x100,ys.bottom);ctx.stroke();
       ctx.font='700 9px Inter,sans-serif';
       ctx.fillStyle='rgba(0,0,0,.5)';
       ctx.textAlign='center';
-      ctx.fillText('Meta',x100,yScale.top-5);
+      ctx.fillText('100% Meta',x100,ys.top-5);
       ctx.setLineDash([]);
       ctx.restore();
     }
   };
 
-  charts['cMetas']&&charts['cMetas'].destroy();
   charts['cMetas']=new Chart(document.getElementById('cMetas'),{
     type:'bar',
-    data:{labels:sorted.map(function(d){return d.nm;}),datasets:datasets},
-    plugins:[refPlugin,momPlugin],
+    data:{
+      labels:sorted.map(function(d){return d.nm;}),
+      datasets:[{
+        label:'% Meta Desafio',
+        data:sorted.map(function(d){return d.pctDes;}),
+        backgroundColor:sorted.map(function(d){return colByPct(d.pctDes)+'cc';}),
+        borderRadius:5,
+        barThickness:22,
+      }]
+    },
+    plugins:[ref100,labelP],
     options:{
       indexAxis:'y',
       responsive:true,
       maintainAspectRatio:false,
-      layout:{padding:{right:140,top:5}},
+      layout:{padding:{right:140,top:12}},
       plugins:{
-        legend:{position:'bottom',labels:{font:{size:10},boxWidth:10,padding:10}},
-        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.raw+'%';}}}
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(c){
+          var d=sorted[c.dataIndex];
+          return[c.dataset.label+': '+c.raw+'%','GMV: '+fmtM(d.gmvReal),'Meta: '+fmtM(d.metaDes)];
+        }}}
       },
       scales:{
-        x:{min:0,max:130,
-           ticks:{callback:function(v){return v+'%';},color:'#aaa',font:{size:9}},
-           grid:{color:'#F5F5F5'}},
+        x:{
+          min:0,
+          max:chartMax, // dinâmico — proporcional ao valor real
+          ticks:{callback:function(v){return v+'%';},color:'#aaa',font:{size:9}},
+          grid:{color:'#F0F2F5'}
+        },
         y:{grid:{display:false},ticks:{color:'#555',font:{size:11,weight:'600'}}}
       }
     }
