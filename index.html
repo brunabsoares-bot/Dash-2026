@@ -1396,41 +1396,32 @@ function heatBg(v){if(v==null)return'#F4F5F7';if(v>=80)return G;if(v>=70)return 
 // id é numérico (ITE_ITEM_ID do BQ). URL: produto.mercadolivre.com.br/MLB-{id}
 // Gera título legível: usa nm real se disponível, senão formata domain+seller
 function getItemTitle(it){
-  if(it.nm&&!it.nm.startsWith('Item ')){return it.nm;}
-  // Formata domain: MLB-BOX_SPRING_AND_MATTRESS_KITS → Box Spring e Cama
+  // Usa título real se disponível (não é placeholder "Item XXXXX")
+  if(it&&it.nm&&!it.nm.startsWith('Item ')){return it.nm;}
+  // Fallback: categoria legível + seller + ID curto
   const domMap={
-    'MLB-MATTRESSES':'Colchão',
-    'MLB-BOX_SPRING_AND_MATTRESS_KITS':'Cama Box + Colchão',
-    'MLB-BOX_SPRING_BASES':'Base Box',
-    'MLB-PILLOWS':'Travesseiro',
-    'MLB-MATTRESS_COVERS':'Protetor/Pillow Top',
-    'MLB-BATH_TOWELS':'Toalha',
+    'MLB-MATTRESSES':'Colchão','MLB-BOX_SPRING_AND_MATTRESS_KITS':'Cama Box + Colchão',
+    'MLB-BOX_SPRING_BASES':'Base Box','MLB-PILLOWS':'Travesseiro',
+    'MLB-MATTRESS_COVERS':'Protetor/Pillow Top','MLB-BATH_TOWELS':'Toalha de Banho',
     'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':'Colchão Massageador',
-    'MLB-POUFS':'Puff',
-    'MLB-SOFAS':'Sofá',
-    'MLB-DINING_TABLES':'Mesa Jantar',
-    'MLB-WALL_SHELVES':'Nicho/Prateleira',
-    'MLB-SPEAKERS':'Caixa Acústica',
-    'MLB-EXERCISE_AND_YOGA_MATS':'Tapete Yoga/Exercício',
-    'MLB-AIR_MATTRESSES':'Colchão Inflável',
-    'MLB-CAT_AND_DOG_BEDS':'Cama Pet',
-    'MLB-HEALTH_CARE_SUPPLIES':'Saúde',
-    'MLB-HEADBOARDS':'Cabeceira',
-    'MLB-HOME_SUPPLIES':'Casa',
-    'MLB-BED_SHEETS':'Jogo de Cama',
-    'MLB-BEDDING':'Roupa de Cama',
-    'MLB-CUSHIONS':'Almofada',
-    'MLB-BLANKETS':'Cobertor',
-    'MLB-COMFORTERS':'Edredom',
-    'MLB-QUILTS_AND_COVERLETS':'Edredom/Colcha',
+    'MLB-POUFS':'Puff','MLB-SOFAS':'Sofá','MLB-DINING_TABLES':'Mesa Jantar',
+    'MLB-WALL_SHELVES':'Prateleira','MLB-SPEAKERS':'Caixa Acústica',
+    'MLB-EXERCISE_AND_YOGA_MATS':'Tapete Yoga','MLB-AIR_MATTRESSES':'Colchão Inflável',
+    'MLB-CAT_AND_DOG_BEDS':'Cama Pet','MLB-BED_SHEETS':'Jogo de Cama',
+    'MLB-BEDDING':'Roupa de Cama','MLB-CUSHIONS':'Almofada','MLB-BLANKETS':'Cobertor',
+    'MLB-COMFORTERS':'Edredom','MLB-HEALTH_CARE_SUPPLIES':'Produto Saúde',
   };
-  const cat=domMap[it.domain]||(it.domain||'').replace('MLB-','').replace(/_/g,' ').toLowerCase();
-  return cat+' — '+it.sel;
+  const dom=it&&it.domain?it.domain:'';
+  const cat=domMap[dom]||(dom.replace('MLB-','').replace(/_/g,' '));
+  const sel=it&&it.sel?it.sel:'';
+  const id=it&&it.id?(' #'+it.id):'';
+  return cat+(sel?' — '+sel:'')+id;
 }
 function itemLink(id,nm,it){
-  const url='https://produto.mercadolivre.com.br/MLB-'+id;
-  const title=it?getItemTitle(it):nm;
-  return'<a class="item-link" href="'+url+'" target="_blank" title="Abrir MLB'+id+'">'+title+'</a>';
+  // URL correta para ITE_ITEM_ID: www.mercadolivre.com.br/MLB-{id}
+  const url='https://www.mercadolivre.com.br/MLB-'+id;
+  const title=it?getItemTitle(it):(nm&&!nm.startsWith('Item ')?nm:'Item MLB'+id);
+  return'<a class="item-link" href="'+url+'" target="_blank" title="Ver anúncio MLB'+id+' no Mercado Livre">'+title+'</a>';
 }
 function fmtItemId(id){return'MLB'+id;}
 
