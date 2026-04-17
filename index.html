@@ -1453,6 +1453,7 @@ function renderClips(ss,ms,cur){
 /* ═══ METAS ═══ */
 const MELI_YELLOW='#FFE600',MELI_ORANGE='#FF6900';
 // Funções globais usadas em renderMetas E _renderMetasChart
+// ≥100% = azul (meta batida) · 80-99% = amarelo (atenção) · <80% = vermelho (abaixo)
 function colByPct(p){return p>=100?B:p>=80?Y:R;}
 function statusBadgeMeta(f,d){
   if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC;padding:4px 9px">🥇 Desafio</span>';
