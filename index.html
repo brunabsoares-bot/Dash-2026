@@ -2461,15 +2461,89 @@ const VISITS_DATA=[
   {cid:1746119501, n:'LUCAS NE',    match:[null,    260,     560715,  662656],    exp:[null,   177,    20327,  84673],      pctExp:[null,68.3,3.6,12.8]},
 ];
 
-// Visitas mensais por Seller × Domínio (Jan-Abr 2026)
-// match=[Jan,Fev,Mar,Abr] exp=[Jan,Fev,Mar,Abr] cheap=[Jan,Fev,Mar,Abr]
-const BPC_VISITS_MONTHLY={
-  '213658244_MLB-MATTRESSES':                   {match:[15068063,20250860,13796567,4686143], exp:[5418811,9565729,7285600,2372224],  cheap:[9649252,10685131,6510967,2313919]},
-  '213658244_MLB-BOX_SPRING_AND_MATTRESS_KITS': {match:[2440047,2621320,1498468,400521],    exp:[923839,1308302,653343,111230],    cheap:[1516207,1313018,845125,289291]},
-  '213658244_MLB-EXERCISE_AND_YOGA_MATS':       {match:[600179,534192,625688,257892],       exp:[343961,237358,157036,154677],     cheap:[256218,296833,468652,103215]},
-  '622556468_MLB-BOX_SPRING_AND_MATTRESS_KITS': {match:[9680517,9405952,11709248,6547563],  exp:[2048629,2534600,4417824,2176004], cheap:[7631888,6871352,7291424,4371559]},
-  '622556468_MLB-MATTRESSES':                   {match:[1512151,1552252,1361300,710308],    exp:[350262,609956,438226,186730],     cheap:[1161889,942296,923074,523578]},
-  '1017072559_MLB-MATTRESSES':                  {match:[4862245,4467130,5346585,2876324],   exp:[2774097,2496602,1932644,1456295], cheap:[2088148,1970528,3413941,1420029]},
+const BPC_DOMAIN_DATA={
+  '1017072559_MLB-MATTRESS_COVERS':{cid:1017072559,nm:'ZEBRANDS',domain:'MLB-MATTRESS_COVERS',match:[378850,433331,461171,252099],exp:[180247,90885,198085,160184],cheap:[198603,342446,263086,91915]},
+  '1017072559_MLB-MATTRESSES':{cid:1017072559,nm:'ZEBRANDS',domain:'MLB-MATTRESSES',match:[4862245,4467130,5346585,2876324],exp:[2774097,2496602,1932644,1456295],cheap:[2088148,1970528,3413941,1420029]},
+  '213658244_MLB-PLACEMATS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-PLACEMATS',match:[,40,20,],exp:[,0,0,],cheap:[0,40,20,0]},
+  '213658244_MLB-BED_SHEETS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BED_SHEETS',match:[646488,533089,457626,210045],exp:[237895,175487,75232,32871],cheap:[408593,357602,382394,177174]},
+  '213658244_MLB-BEACH_BLANKETS_AND_MATS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BEACH_BLANKETS_AND_MATS',match:[90,374,181,58],exp:[50,30,0,0],cheap:[40,344,181,58]},
+  '213658244_MLB-AIR_MATTRESSES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-AIR_MATTRESSES',match:[12090,9669,4458,1538],exp:[4073,7173,3244,879],cheap:[8017,2496,1214,659]},
+  '130704477_MLB-MATTRESSES':{cid:130704477,nm:'ECONEWCOLCH',domain:'MLB-MATTRESSES',match:[5816,469,104,],exp:[4,73,25,],cheap:[5812,396,79,0]},
+  '130704477_MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':{cid:130704477,nm:'ECONEWCOLCH',domain:'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS',match:[29021,4419,6255,],exp:[146,304,41,],cheap:[28875,4115,6214,0]},
+  '1223087781_MLB-POUFS':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-POUFS',match:[,,46046,43538],exp:[,,0,0],cheap:[0,0,46046,43538]},
+  '1223087781_MLB-PILLOWS':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-PILLOWS',match:[9536,4758,29112,3684],exp:[9145,3507,8429,3242],cheap:[391,1251,20683,442]},
+  '1223087781_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[3495322,4739864,8437857,4311447],exp:[1095648,945934,1694080,840015],cheap:[2399674,3793930,6743777,3471432]},
+  '213658244_MLB-POUFS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-POUFS',match:[3312658,3842423,3082652,1186178],exp:[785176,1007025,847091,665827],cheap:[2527482,2835398,2235561,520351]},
+  '213658244_MLB-CUSHION_AND_PILLOW_COVERS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-CUSHION_AND_PILLOW_COVERS',match:[19556,29699,17421,4642],exp:[417,3867,4709,319],cheap:[19139,25832,12712,4323]},
+  '213658244_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[2440047,2621320,1498468,400521],exp:[923839,1308302,653343,111230],cheap:[1516208,1313018,845125,289291]},
+  '213658244_MLB-BABY_BASSINETS_MOSES_BASKETS_AND_MINI_CRIBS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_BASSINETS_MOSES_BASKETS_AND_MINI_CRIBS',match:[19266,15101,9759,6367],exp:[887,387,0,0],cheap:[18379,14714,9759,6367]},
+  '1017072559_MLB-BOX_SPRING_BASES':{cid:1017072559,nm:'ZEBRANDS',domain:'MLB-BOX_SPRING_BASES',match:[94200,61200,78708,40439],exp:[50660,24035,25560,18548],cheap:[43540,37165,53148,21891]},
+  '656012015_MLB-MATTRESSES':{cid:656012015,nm:'ZIDI MOVEISEDECORA��O',domain:'MLB-MATTRESSES',match:[590745,424097,1081620,889817],exp:[125646,116773,344844,324492],cheap:[465099,307324,736776,565325]},
+  '622556468_MLB-PILLOWS':{cid:622556468,nm:'LUCAS-HOME',domain:'MLB-PILLOWS',match:[291818,244492,73439,81909],exp:[0,0,0,0],cheap:[291818,244492,73439,81909]},
+  '622556468_MLB-BOX_SPRING_BASES':{cid:622556468,nm:'LUCAS-HOME',domain:'MLB-BOX_SPRING_BASES',match:[24010,18855,58875,36631],exp:[2395,4236,17043,15310],cheap:[21615,14619,41832,21321]},
+  '3032269507_MLB-PILLOWS':{cid:3032269507,nm:'BEGTRAVESSEIROS',domain:'MLB-PILLOWS',match:[14608,45690,76000,26334],exp:[5406,27350,26082,13386],cheap:[9202,18340,49918,12948]},
+  '1223087781_MLB-BOX_SPRING_BASES':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-BOX_SPRING_BASES',match:[4381,5295,9918,9199],exp:[1728,211,1534,379],cheap:[2653,5084,8384,8820]},
+  '213658244_MLB-SLEEPING_BAGS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-SLEEPING_BAGS',match:[32666,29360,21849,5632],exp:[22081,15130,5581,577],cheap:[10585,14230,16268,5055]},
+  '213658244_MLB-EXERCISE_AND_YOGA_MATS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-EXERCISE_AND_YOGA_MATS',match:[600179,534192,625688,257892],exp:[343961,237358,157036,154677],cheap:[256218,296834,468652,103215]},
+  '213658244_MLB-CUSHIONS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-CUSHIONS',match:[234808,285048,263020,122723],exp:[133753,79659,70279,104120],cheap:[101055,205389,192741,18603]},
+  '213658244_MLB-BOX_SPRING_COVERS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BOX_SPRING_COVERS',match:[247,660,341,118],exp:[72,36,5,88],cheap:[175,624,336,30]},
+  '213658244_MLB-BABY_TOWELS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_TOWELS',match:[,,297,937],exp:[,,0,0],cheap:[0,0,297,937]},
+  '2287647005_MLB-MATTRESSES':{cid:2287647005,nm:'SONNUS',domain:'MLB-MATTRESSES',match:[2944,6893,14340,8922],exp:[22,336,41,0],cheap:[2922,6557,14299,8922]},
+  '1479401290_MLB-BED_SHEETS':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-BED_SHEETS',match:[221399,122275,80383,91679],exp:[54483,29181,5610,0],cheap:[166916,93094,74773,91679]},
+  '1176215393_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:1176215393,nm:'ZIDI',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[173109,389013,240186,346932],exp:[32153,7453,41253,54438],cheap:[140956,381560,198933,292494]},
+  '361841053_MLB-PILLOWS':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-PILLOWS',match:[2192617,1935671,2067087,866217],exp:[824896,824325,944136,249705],cheap:[1367721,1111346,1122951,616512]},
+  '361841053_MLB-BEDS':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-BEDS',match:[2347943,1871503,1825932,1093875],exp:[61076,84452,71452,62538],cheap:[2286867,1787051,1754480,1031337]},
+  '213658244_MLB-HEADBOARDS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-HEADBOARDS',match:[527,589,508,226],exp:[6,27,166,9],cheap:[521,562,342,217]},
+  '213658244_MLB-BABY_SUPPLIES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_SUPPLIES',match:[219,336,135,],exp:[0,0,23,],cheap:[219,336,112,0]},
+  '1746119501_MLB-MATTRESSES':{cid:1746119501,nm:'LUCAS_HOME_NORDESTE',domain:'MLB-MATTRESSES',match:[,150,72672,159879],exp:[,70,15916,45768],cheap:[0,80,56756,114111]},
+  '656012015_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:656012015,nm:'ZIDI MOVEISEDECORA��O',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[132278,167075,343329,206826],exp:[8366,42912,163743,95671],cheap:[123912,124163,179586,111155]},
+  '361841053_MLB-MATTRESSES':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-MATTRESSES',match:[6379,9895,16900,9643],exp:[0,172,975,1865],cheap:[6379,9723,15925,7778]},
+  '361841053_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[78372,57354,37833,21922],exp:[832,458,1177,1836],cheap:[77540,56896,36656,20086]},
+  '213658244_MLB-MATTRESSES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-MATTRESSES',match:[15068063,20250860,13796567,4686143],exp:[5418811,9565729,7285600,2372224],cheap:[9649252,10685131,6510967,2313919]},
+  '213658244_MLB-HAND_TOWELS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-HAND_TOWELS',match:[356,499,444,26],exp:[356,497,435,0],cheap:[0,2,9,26]},
+  '213658244_MLB-BABY_ECOLOGICAL_DIAPERS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_ECOLOGICAL_DIAPERS',match:[92,26,12,64],exp:[92,20,0,40],cheap:[0,6,12,24]},
+  '1479401290_MLB-PILLOWS':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-PILLOWS',match:[15795,9533,17661,6974],exp:[2278,2457,2516,2591],cheap:[13517,7076,15145,4383]},
+  '1479401290_MLB-BEDDING':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-BEDDING',match:[19204,32293,23062,13092],exp:[0,16682,3414,2],cheap:[19204,15611,19648,13090]},
+  '1223087781_MLB-ELECTRIC_ANTIDECUBITUS_MATTRESSES':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-ELECTRIC_ANTIDECUBITUS_MATTRESSES',match:[,432,,],exp:[,432,,],cheap:[0,0,0,0]},
+  '1017072559_MLB-PILLOWS':{cid:1017072559,nm:'ZEBRANDS',domain:'MLB-PILLOWS',match:[83993,105271,108843,37038],exp:[63361,26466,28742,6700],cheap:[20632,78805,80101,30338]},
+  '622556468_MLB-BEDS':{cid:622556468,nm:'LUCAS-HOME',domain:'MLB-BEDS',match:[2850,1975,3139,2771],exp:[854,53,0,0],cheap:[1996,1922,3139,2771]},
+  '213658244_MLB-PILLOWS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-PILLOWS',match:[243459,306609,246295,79383],exp:[45765,55272,37620,39072],cheap:[197694,251337,208675,40311]},
+  '213658244_MLB-MATTRESS_COVERS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-MATTRESS_COVERS',match:[1397992,1708154,1932782,1168048],exp:[706092,658744,741284,632800],cheap:[691900,1049410,1191498,535248]},
+  '213658244_MLB-DECORATIVE_BLANKETS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-DECORATIVE_BLANKETS',match:[195510,153927,193605,89191],exp:[40420,31208,41878,8388],cheap:[155090,122719,151727,80803]},
+  '213658244_MLB-CAT_AND_DOG_BEDS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-CAT_AND_DOG_BEDS',match:[149479,174933,218762,100358],exp:[49477,37947,5299,43580],cheap:[100002,136986,213463,56778]},
+  '213658244_MLB-BEDDING':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BEDDING',match:[76983,76233,15093,6792],exp:[53413,42848,430,3123],cheap:[23570,33385,14663,3669]},
+  '1479401290_MLB-MATTRESS_COVERS':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-MATTRESS_COVERS',match:[1618,,59203,69467],exp:[1062,,40442,59944],cheap:[556,0,18761,9523]},
+  '213658244_MLB-ELECTRIC_ANTIDECUBITUS_MATTRESSES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-ELECTRIC_ANTIDECUBITUS_MATTRESSES',match:[1564,1329,1002,606],exp:[1420,1222,728,368],cheap:[144,107,274,238]},
+  '213658244_MLB-BABY_CUSHIONS_AND_PILLOWS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_CUSHIONS_AND_PILLOWS',match:[15915,20440,7846,2090],exp:[9855,11193,1288,0],cheap:[6060,9247,6558,2090]},
+  '2287647005_MLB-BOX_SPRING_BASES':{cid:2287647005,nm:'SONNUS',domain:'MLB-BOX_SPRING_BASES',match:[123,168,132,178],exp:[0,0,0,0],cheap:[123,168,132,178]},
+  '1479401290_MLB-BATH_TOWELS':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-BATH_TOWELS',match:[1456910,1029588,1203709,848705],exp:[154363,237484,97988,11367],cheap:[1302547,792104,1105721,837338]},
+  '1223087781_MLB-MATTRESSES':{cid:1223087781,nm:'KAZA MIX',domain:'MLB-MATTRESSES',match:[209578,237571,385046,396316],exp:[145583,119962,246851,278767],cheap:[63995,117609,138195,117549]},
+  '361841053_MLB-BOX_SPRING_BASES':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-BOX_SPRING_BASES',match:[6687452,5712133,6189204,2961829],exp:[1155063,1225250,1050208,744499],cheap:[5532389,4486883,5138996,2217330]},
+  '213658244_MLB-STORAGE_CHESTS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-STORAGE_CHESTS',match:[488,716,207,],exp:[62,7,0,],cheap:[426,709,207,0]},
+  '213658244_MLB-QUILTS_AND_COVERLETS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-QUILTS_AND_COVERLETS',match:[15634,11847,40484,92903],exp:[5120,6815,9826,20447],cheap:[10514,5032,30658,72456]},
+  '213658244_MLB-HOME_SUPPLIES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-HOME_SUPPLIES',match:[145599,192580,179452,53281],exp:[90248,77455,92363,38662],cheap:[55351,115125,87089,14619]},
+  '213658244_MLB-HEALTH_CARE_SUPPLIES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-HEALTH_CARE_SUPPLIES',match:[172,284,20,],exp:[66,18,0,],cheap:[106,266,20,0]},
+  '213658244_MLB-BABY_BLANKETS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BABY_BLANKETS',match:[2396,4030,3107,],exp:[0,0,0,],cheap:[2396,4030,3107,0]},
+  '1746119501_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:1746119501,nm:'LUCAS_HOME_NORDESTE',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[,110,488043,502777],exp:[,108,4411,38905],cheap:[0,2,483632,463872]},
+  '1479401290_MLB-MATTRESSES':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-MATTRESSES',match:[967739,898668,1476760,738555],exp:[617589,359637,471529,283054],cheap:[350150,539031,1005231,455501]},
+  '622556468_MLB-MATTRESSES':{cid:622556468,nm:'LUCAS-HOME',domain:'MLB-MATTRESSES',match:[1512151,1552252,1361300,710308],exp:[350262,609956,438226,186730],cheap:[1161889,942296,923074,523578]},
+  '213658244_MLB-SOFAS_FUTONS_AND_ARMCHAIRS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-SOFAS_FUTONS_AND_ARMCHAIRS',match:[934741,655957,731658,359196],exp:[764796,285101,101398,272506],cheap:[169945,370856,630260,86690]},
+  '213658244_MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS',match:[511,266,186,173],exp:[0,0,0,0],cheap:[511,266,186,173]},
+  '213658244_MLB-ANIMAL_AND_PET_PRODUCTS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-ANIMAL_AND_PET_PRODUCTS',match:[3639,4191,3512,],exp:[1653,356,0,],cheap:[1986,3835,3512,0]},
+  '1176215393_MLB-MATTRESSES':{cid:1176215393,nm:'ZIDI',domain:'MLB-MATTRESSES',match:[4119295,5585550,4013327,3890369],exp:[95937,40505,118773,2123],cheap:[4023358,5545045,3894554,3888246]},
+  '361841053_MLB-CUSHION_AND_PILLOW_COVERS':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-CUSHION_AND_PILLOW_COVERS',match:[,,,1010],exp:[,,,63],cheap:[0,0,0,947]},
+  '213658244_MLB-BATH_TOWELS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BATH_TOWELS',match:[684372,1335683,1398462,706610],exp:[156466,669752,172786,67247],cheap:[527906,665931,1225676,639363]},
+  '656012015_MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS':{cid:656012015,nm:'ZIDI MOVEISEDECORA��O',domain:'MLB-MASSAGING_BOX_SPRING_AND_MATTRESS_KITS',match:[,,,64],exp:[,,,64],cheap:[0,0,0,0]},
+  '361841053_MLB-MATTRESS_COVERS':{cid:361841053,nm:'CAMA INHOUSE',domain:'MLB-MATTRESS_COVERS',match:[48620,54392,108004,63531],exp:[0,3793,17515,21159],cheap:[48620,50599,90489,42372]},
+  '213658244_MLB-STOOLS_AND_BENCHES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-STOOLS_AND_BENCHES',match:[472,68,7,],exp:[188,33,5,],cheap:[284,35,2,0]},
+  '130704477_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:130704477,nm:'ECONEWCOLCH',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[68,225,115,],exp:[0,0,54,],cheap:[68,225,61,0]},
+  '1479401290_MLB-QUILTS_AND_COVERLETS':{cid:1479401290,nm:'BFCASAFULL',domain:'MLB-QUILTS_AND_COVERLETS',match:[17570,72521,104335,55787],exp:[27,6711,13300,22205],cheap:[17543,65810,91035,33582]},
+  '622556468_MLB-BOX_SPRING_AND_MATTRESS_KITS':{cid:622556468,nm:'LUCAS-HOME',domain:'MLB-BOX_SPRING_AND_MATTRESS_KITS',match:[9680517,9405952,11709248,6547563],exp:[2048629,2534600,4417824,2176004],cheap:[7631888,6871352,7291424,4371559]},
+  '213658244_MLB-ROBES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-ROBES',match:[1519,1017,244,],exp:[190,110,25,],cheap:[1329,907,219,0]},
+  '213658244_MLB-FACIAL_TOWELS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-FACIAL_TOWELS',match:[3435,7210,5268,654],exp:[473,1283,218,237],cheap:[2962,5927,5050,417]},
+  '213658244_MLB-COMFORTERS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-COMFORTERS',match:[148571,138373,242026,175192],exp:[40264,43953,54773,57926],cheap:[108307,94420,187253,117266]},
+  '213658244_MLB-BOX_SPRING_BASES':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BOX_SPRING_BASES',match:[54586,62829,50436,18664],exp:[28308,23759,14121,5798],cheap:[26278,39070,36315,12866]},
+  '213658244_MLB-BLANKETS':{cid:213658244,nm:'EMCOMPRE',domain:'MLB-BLANKETS',match:[16233,12780,21650,20684],exp:[13925,8715,2796,10975],cheap:[2308,4065,18854,9709]},
 };
 
 // Formata visitas como número inteiro com separador de milhar (sem K/M)
@@ -2858,46 +2932,43 @@ function renderTab2(){
   const rM=ms.map(mi=>{const rg=ss.filter(s=>s.bpc[mi]!=null&&s.bpc[mi]<80).reduce((a,s)=>a+(s.gmv[mi]||0),0);const tg=ss.reduce((a,s)=>a+(s.gmv[mi]||0),0);return tg?+(rg/tg*100).toFixed(1):0;});
   charts['cGmvRisk']?.destroy();
   charts['cGmvRisk']=new Chart(document.getElementById('cGmvRisk'),{type:'bar',data:{labels:ms.map(i=>MN[i]),datasets:[{label:'% GMV em Risco',data:rM,backgroundColor:rM.map(v=>v>60?R+'bb':v>40?Y+'bb':G+'bb'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw}% do GMV abaixo de 80% BPC`}}},scales:{x:{grid:{display:false},ticks:{color:'#aaa'}},y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}}});
-  // Itens Analisados no BPC — agrupado por Seller × Domínio
+  // Itens Analisados no BPC — todos os itens mapeados, agrupados por Seller × Domínio
   _renderBpcOffTable=(function(){
-    const _ss=ss;
+    const _ss=ss; // sellers selecionados no dashboard
     return function(){
       const off=document.getElementById('tBpcOff');
       if(!off)return;
       const sortBy=document.getElementById('bpcOffSort')?.value||'vol_abr';
-      const isShippers=bpcView==='shippers'; // shippers = cheaper
+      const isShippers=bpcView==='shippers';
       const MN=['Jan','Fev','Mar','Abr'];
       const modeCol=isShippers?G:R;
-      const modeLabel=isShippers?'Shippers (Cheaper)':'Expensive';
+      const modeLabel=isShippers?'Shippers':'Expensive';
+      const selCids=_ss&&_ss.length?new Set(_ss.map(s=>s.cid)):null;
 
-      // ── Agrupa BPC_OFF por seller×domínio ──
-      const groups={};
-      BPC_OFF.forEach(it=>{
-        const key=it.cid+'_'+it.domain;
-        if(!groups[key]) groups[key]={cid:it.cid,sel:it.sel,domain:it.domain,items:[]};
-        groups[key].items.push(it);
-      });
+      // ── Monta linhas a partir de BPC_DOMAIN_DATA — todos os seller×domínio mapeados ──
+      // Filtra pelos sellers selecionados no dashboard
+      const rows=Object.values(BPC_DOMAIN_DATA)
+        .filter(d=>!selCids||selCids.has(+d.cid))
+        .map(d=>{
+          const vol=isShippers?d.cheap:d.exp;
+          const ytdVol=vol.reduce((a,v)=>a+(v||0),0);
+          const ytdMatch=d.match.reduce((a,v)=>a+(v||0),0);
+          const ytdExp=d.exp.reduce((a,v)=>a+(v||0),0);
+          const pctExp=ytdMatch>0?+(ytdExp/ytdMatch*100).toFixed(1):null;
+          const pctCheap=ytdMatch>0?+((ytdMatch-ytdExp)/ytdMatch*100).toFixed(1):null;
+          const oppScore=pctCheap!=null&&pctExp!=null?pctCheap-pctExp:0;
+          // Busca itens do ITEMS array nesse seller×domínio
+          const domainItems=ITEMS.filter(it=>it.cid===+d.cid&&it.domain===d.domain);
+          return{cid:+d.cid,sel:d.nm,domain:d.domain,vol,match:d.match,
+            ytdVol,ytdMatch,pctExp,pctCheap,oppScore,domainItems};
+        });
 
-      // ── Enriquece cada grupo com visitas ──
-      const rows=Object.values(groups).map(g=>{
-        const vm=BPC_VISITS_MONTHLY[g.cid+'_'+g.domain];
-        const vol=isShippers?(vm?vm.cheap:[null,null,null,null]):(vm?vm.exp:[null,null,null,null]);
-        const match=vm?vm.match:[null,null,null,null];
-        const ytdVol=vol.reduce((a,v)=>a+(v||0),0);
-        const ytdMatch=match.reduce((a,v)=>a+(v||0),0);
-        const ytdExp=vm?vm.exp.reduce((a,v)=>a+(v||0),0):0;
-        const pctExp=ytdMatch>0?+(ytdExp/ytdMatch*100).toFixed(1):null;
-        const pctCheap=ytdMatch>0?+((ytdMatch-ytdExp)/ytdMatch*100).toFixed(1):null;
-        const oppScore=pctCheap!=null&&pctExp!=null?pctCheap-pctExp:0;
-        return{...g,vm,vol,match,ytdVol,ytdMatch,pctExp,pctCheap,oppScore};
-      });
-
-      // ── Share: vol[i] / sum_of_all_groups_vol[i] ──
+      // ── Share: vol[i] / total de todos os grupos nesse mês ──
       const monthTotal=MN.map((_,i)=>rows.reduce((a,r)=>a+(r.vol[i]||0),0));
 
-      // ── Relevância: ytdMatch / total ytdMatch ──
+      // ── Relevância: ytdMatch / total portfolio ──
       const grandTotal=rows.reduce((a,r)=>a+r.ytdMatch,0);
-      rows.forEach(r=>{ r.relevance=grandTotal>0?+(r.ytdMatch/grandTotal*100).toFixed(1):0; });
+      rows.forEach(r=>{r.relevance=grandTotal>0?+(r.ytdMatch/grandTotal*100).toFixed(1):0;});
 
       // ── Ordenação ──
       rows.sort((a,b)=>{
@@ -2906,52 +2977,55 @@ function renderTab2(){
           case'share_abr':   return((b.vol[3]||0)/(monthTotal[3]||1))-((a.vol[3]||0)/(monthTotal[3]||1));
           case'pct':         return(b.pctExp||0)-(a.pctExp||0);
           case'opportunity': return b.oppScore-a.oppScore;
-          default:           return(b.vol[3]||0)-(a.vol[3]||0); // vol_abr
+          default:           return(b.vol[3]||0)-(a.vol[3]||0);
         }
       });
 
-      // ── Cabeçalho ──
-      const maxVol=Math.max(...rows.flatMap(r=>r.vol.map(v=>v||0)));
-      off.innerHTML=`<thead><tr>
-        <th>Seller</th><th>Itens no BPC</th>
-        ${MN.map(m=>`<th style="color:${modeCol}">Visitas ${m}</th><th>Share ${m}</th>`).join('')}
-        <th>% Expensive</th><th>% Shippers</th>
-        <th>Relevância</th><th>Oportunidade</th>
-      </tr></thead>`;
+      const maxVol=Math.max(...rows.flatMap(r=>r.vol.map(v=>v||0)),1);
+
+      // ── Cabeçalho — APENAS a view ativa (Shippers OU Expensive) ──
+      off.innerHTML='<thead><tr>'
+        +'<th>Seller</th><th>Itens (MLB)</th>'
+        +MN.map(m=>'<th style="color:'+modeCol+'">'+modeLabel+' '+m+'</th><th>Share '+m+'</th>').join('')
+        +'<th>% Exp</th><th>% Ship</th><th>Relevância</th><th>Oportunidade</th>'
+        +'</tr></thead>';
 
       const tb=document.createElement('tbody');
       rows.forEach(r=>{
-        // Lista de itens compacta
-        const itemsList=r.items.map(it=>
-          `<span style="display:inline-block;font-size:9px;background:#F0F2F5;border-radius:4px;padding:1px 5px;margin:1px">${itemLink(it.id,it.nm?it.nm.slice(0,28):'MLB'+it.id,it)}</span>`
-        ).join('');
+        // Itens do ITEMS array para esse seller×domínio como tags MLB clicáveis
+        const itTags=r.domainItems.length>0
+          ? r.domainItems.slice(0,5).map(it=>{
+              const mlbId='MLB'+it.id;
+              const url='https://www.mercadolivre.com.br/MLB-'+it.id;
+              return '<a href="'+url+'" target="_blank" style="display:inline-block;font-size:9px;background:#E8F0FE;color:var(--b);border-radius:4px;padding:2px 6px;margin:1px;text-decoration:none;font-weight:600">'+mlbId+'</a>';
+            }).join('')+(r.domainItems.length>5?'<span style="font-size:9px;color:#aaa"> +mais</span>':'')
+          : '<span style="font-size:9px;color:#aaa">sem mapeamento</span>';
+
         const pctExpCol=r.pctExp==null?'#aaa':r.pctExp>40?R:r.pctExp>25?Y:G;
         const pctChpCol=r.pctCheap==null?'#aaa':r.pctCheap>75?G:r.pctCheap>50?Y:R;
         const opp=r.oppScore>30?'🟢 Alta':r.oppScore>0?'🟡 Média':'🔴 Baixa';
 
-        let row=`<tr>
-          <td><strong style="font-size:12px">${r.sel}</strong><br><span style="font-size:9px;color:var(--gr)">${r.domain.replace('MLB-','')}</span></td>
-          <td style="max-width:200px;white-space:normal">${itemsList}</td>`;
+        let row='<tr>'
+          +'<td><strong style="font-size:12px">'+r.sel+'</strong><br><span style="font-size:9px;color:var(--gr)">'+r.domain.replace('MLB-','')+'</span></td>'
+          +'<td style="max-width:220px;white-space:normal;line-height:1.8">'+itTags+'</td>';
 
-        // Meses: visitas + share + barra
         for(let i=0;i<4;i++){
           const v=r.vol[i],tot=monthTotal[i];
           const share=v&&tot?+(v/tot*100).toFixed(1):null;
           const barW=v&&maxVol?Math.round(v/maxVol*100):0;
-          row+=`<td>
-            <div style="font-size:11px;font-weight:700">${v!=null?fmtVisits(v):'—'}</div>
-            <div style="background:#F0F2F5;border-radius:3px;height:5px;margin-top:2px;overflow:hidden">
-              <div style="width:${barW}%;height:100%;background:${modeCol}cc;border-radius:3px"></div>
-            </div>
-          </td>
-          <td><span style="font-weight:800;color:${modeCol};font-size:11px">${share!=null?share+'%':'—'}</span></td>`;
+          row+='<td>'
+            +'<div style="font-size:11px;font-weight:700">'+( v?fmtVisits(v):'—')+'</div>'
+            +'<div style="background:#F0F2F5;border-radius:3px;height:5px;margin-top:2px;overflow:hidden">'
+            +'<div style="width:'+barW+'%;height:100%;background:'+modeCol+'cc;border-radius:3px"></div></div>'
+            +'</td>'
+            +'<td><span style="font-weight:800;color:'+modeCol+';font-size:11px">'+(share!=null?share+'%':'—')+'</span></td>';
         }
 
-        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctExpCol}">${r.pctExp!=null?r.pctExp+'%':'—'}</span></td>`;
-        row+=`<td><span style="font-weight:900;font-size:13px;color:${pctChpCol}">${r.pctCheap!=null?r.pctCheap+'%':'—'}</span></td>`;
-        row+=`<td style="font-weight:700;color:var(--b)">${r.relevance}%</td>`;
-        row+=`<td style="font-size:13px">${opp}</td>`;
-        row+=`</tr>`;
+        row+='<td><span style="font-weight:900;font-size:13px;color:'+pctExpCol+'">'+(r.pctExp!=null?r.pctExp+'%':'—')+'</span></td>';
+        row+='<td><span style="font-weight:900;font-size:13px;color:'+pctChpCol+'">'+(r.pctCheap!=null?r.pctCheap+'%':'—')+'</span></td>';
+        row+='<td style="font-weight:700;color:var(--b)">'+r.relevance+'%</td>';
+        row+='<td style="font-size:13px">'+opp+'</td>';
+        row+='</tr>';
         tb.innerHTML+=row;
       });
       off.appendChild(tb);
