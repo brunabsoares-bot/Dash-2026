@@ -1441,6 +1441,14 @@ function renderClips(ss,ms,cur){
 
 /* ═══ METAS ═══ */
 const MELI_YELLOW='#FFE600',MELI_ORANGE='#FF6900';
+// Funções globais usadas em renderMetas E _renderMetasChart
+function colByPct(p){return p>=100?B:p>=80?Y:R;}
+function statusBadgeMeta(f,d){
+  if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC;padding:4px 9px">🥇 Desafio</span>';
+  if(f>=100)return'<span class="badge bg" style="padding:4px 9px">✅ Meta</span>';
+  if(d>=80) return'<span class="badge by" style="padding:4px 9px">Em Atenção</span>';
+  return'<span class="badge br" style="padding:4px 9px">Abaixo</span>';
+}
 var showMetaFin=true;
 var _mLast={ss:null,ms:null,cur:null,prev:null};
 
@@ -1459,12 +1467,18 @@ function onToggleMetaFin(){
 function renderMetas(ss,ms,cur,prev){
   // Obter prev do getD se não passado
   if(prev===undefined){var d=getD();prev=d.prev;}
+  // Set de CIDs selecionados pelo filtro de seller
+  var selCids=new Set();
+  for(var i=0;i<ss.length;i++){selCids.add(ss[i].cid);}
+
   var metaSellers=[];
   for(var cidStr in METAS){
     var m=METAS[cidStr];
     var cid=parseInt(cidStr,10);
     var seller=null;
     for(var i=0;i<S.length;i++){if(S[i].cid===cid){seller=S[i];break;}}
+    // Filtra: só inclui se o seller estiver selecionado (ou se nenhum filtro ativo)
+    if(ss.length>0&&seller&&!selCids.has(cid)){continue;}
     // GMV período atual
     var gmvReal=0;
     for(var j=0;j<ms.length;j++){gmvReal+=seller&&seller.gmv[ms[j]]?seller.gmv[ms[j]]:0;}
@@ -1501,21 +1515,7 @@ function renderMetas(ss,ms,cur,prev){
   // Salvar para re-render no toggle
   _mLast={ss:ss,ms:ms,cur:cur,prev:prev,metaSellers:metaSellers};
 
-  // ── Helpers ──
-  function colByPct(p){return p>=100?B:p>=80?Y:R;}
-  function deltaHtml(r,p){
-    if(r==null||p==null)return'<span style="color:#ccc">—</span>';
-    var s=r>=0?'+':'';
-    var c=r>=0?'var(--g)':'var(--r)';
-    return'<span style="color:'+c+';font-weight:700">'+s+fmtM(r)+'</span>'+
-          '<br><span style="font-size:10px;color:'+c+'">'+s+p+'%</span>';
-  }
-  function statusBadgeMeta(f,d){
-    if(d>=100)return'<span class="badge" style="background:#7B00CC22;color:#7B00CC;padding:4px 9px">🥇 Desafio</span>';
-    if(f>=100)return'<span class="badge bg" style="padding:4px 9px">✅ Meta</span>';
-    if(d>=80) return'<span class="badge by" style="padding:4px 9px">Em Atenção</span>';
-    return'<span class="badge br" style="padding:4px 9px">Abaixo</span>';
-  }
+  // (colByPct e statusBadgeMeta definidas globalmente acima)
 
   // ── KPIs portfolio ──
   var totReal=0,totFin=0,totDes=0,totMomR=0,totYoyR=0,hasMom=false,hasYoyK=false;
