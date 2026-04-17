@@ -156,6 +156,11 @@ header{background:var(--nv);padding:16px 32px;display:flex;align-items:center;ju
 .sic.risk .sic-t{color:var(--r);}
 .sic.rec .sic-t{color:var(--b);}
 .sic-item{font-size:11px;margin-bottom:5px;line-height:1.4;color:#333;}
+/* Metas / Atingimento */
+.meta-bar-wrap{background:#F0F2F5;border-radius:6px;height:8px;overflow:hidden;margin-top:4px;}
+.meta-bar-fill{height:100%;border-radius:6px;transition:width .4s;}
+.ating-num{font-size:13px;font-weight:800;letter-spacing:-.3px;}
+.badge-des{background:rgba(148,0,211,.12);color:#7B00CC;}
 /* Reputation cards */
 .rep-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .rep-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid #ccc;}
@@ -225,6 +230,7 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
 <div id="tab-t1" class="tab-content on">
   <div class="snav">
     <div class="snb on" onclick="gotoSec('s-kpi')">KPIs</div>
+    <div class="snb" onclick="gotoSec('s-metas')">🎯 Metas</div>
     <div class="snb" onclick="gotoSec('s-vendas')">Vendas</div>
     <div class="snb" onclick="gotoSec('s-reputacao')">Reputação</div>
     <div class="snb" onclick="gotoSec('s-sellers')">Sellers</div>
@@ -242,6 +248,26 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
       <div class="kpi b"><div class="kpi-lbl">Orders</div><div class="kpi-val" id="kv1">—</div><div class="kpi-deltas" id="kd1"></div></div>
       <div class="kpi b"><div class="kpi-lbl">Ticket Médio</div><div class="kpi-val" id="kv2">—</div><div class="kpi-deltas" id="kd2"></div></div>
     </div>
+    <!-- METAS -->
+    <div class="section" id="s-metas">
+      <div class="sec-hd">
+        <div class="sec-title">Atingimento de Metas 2026</div>
+        <div class="sec-sub">Meta Financeira · Meta Desafio · GMV Real vs Objetivo · SONNUS em construção</div>
+      </div>
+      <div class="g4" id="metaKpis" style="margin-bottom:14px"></div>
+      <div class="g2">
+        <div class="card" style="overflow-x:auto">
+          <div class="card-title">Atingimento por Seller — período selecionado</div>
+          <table class="tbl" id="tblMetas" style="margin-top:10px"></table>
+        </div>
+        <div class="card">
+          <div class="card-title">GMV Real vs Metas — período selecionado</div>
+          <div style="height:280px"><canvas id="cMetas"></canvas></div>
+        </div>
+      </div>
+      <div class="sec-ins" id="si-metas"></div>
+    </div>
+
     <div class="section" id="s-vendas">
       <div class="sec-hd"><div class="sec-title">Performance de Vendas</div><div class="sec-sub">GMV e Orders por seller no período</div></div>
       <div class="g2">
@@ -609,6 +635,33 @@ const S=[
    log:{FBM:0,XD:0,Otro:100,FLEX:0}},
 ];
 
+// ─── METAS FINANCEIRA & DESAFIO — fonte: Planilha de metas 2026 ───
+// Índice [Jan,Fev,Mar,Abr,Mai,Jun,Jul,Ago,Set,Out,Nov,Dez]
+// CID 268449929 (CAMA INHOUSE target) mapeado para 361841053 (dados reais)
+const METAS={
+  1479401290:{nm:'BF COLCHÕES',
+    fin:[5386271,5002193,5809780,5773209,6595490,7200431,7950485,7700905,8399350,8925562,9104741,7245516],
+    des:[7534281,6997037,8126684,8075528,9225730,10071918,11121088,10771978,11748959,12485020,12735655,10134983]},
+  361841053:{nm:'CAMA INHOUSE',
+    fin:[1411022,1310407,1521967,1512387,1727797,1886271,2082760,2017379,2200348,2338198,2385136,1898082],
+    des:[1686126,1565894,1818702,1807254,2064662,2254033,2488831,2410702,2629345,2794071,2850161,2268147]},
+  130704477:{nm:'ECONEW',
+    fin:[332850,309115,359021,356761,407575,444957,491308,475885,519046,551564,562636,447744],
+    des:[316697,294114,341598,339447,387795,423364,467465,452790,493857,524796,535332,426015]},
+  1223087781:{nm:'KAZA MIX',
+    fin:[758306,704234,817930,812781,928546,1013713,1119309,1084172,1182503,1256585,1281811,1020060],
+    des:[872432,810222,941029,935106,1068293,1166278,1287766,1247341,1360471,1445703,1474725,1173580]},
+  1746119501:{nm:'LUCAS HOME',
+    fin:[2494996,2317086,2691172,2674231,3055124,3335341,3682776,3567168,3890697,4134446,4217444,3356225],
+    des:[2950657,2740256,3182660,3162626,3613081,3944474,4355362,4218639,4601255,4889520,4987676,3969172]},
+  1017072559:{nm:'LUUNA COLCHÕES',
+    fin:[3620320,3362167,3904977,3880396,4433083,4839687,5343827,5176075,5645527,5999214,6119648,4869991],
+    des:[4331982,4023082,4672595,4643182,5304513,5791045,6394286,6193558,6755292,7178505,7322613,5827305]},
+  1176215393:{nm:'ZIDI',
+    fin:[768163,713388,828562,823346,940616,1026889,1133858,1098265,1197873,1272919,1298473,1033319],
+    des:[915764,850464,987768,981550,1121353,1224204,1351727,1309294,1428042,1517507,1547971,1231869]},
+};
+
 // ─── REPUTAÇÃO — fonte: DM_MARKETPLACE_COMMERCE_SELLERS (SELLER_REPUTATION) + DM_EFICIENCIA_MLB ───
 // rep: valor original do BQ | hist: [Jan,Fev,Mar,Abr] rep mensal
 // cancel: [Jan,Fev,Mar,Abr] cancelamentos | orders: [Jan,Fev,Mar,Abr] pedidos totais
@@ -939,6 +992,7 @@ function render(){
   renderLogistics(ss);
   renderPayment(ss);
   renderItems();
+  renderMetas(ss,ms,cur);
   renderClips(ss,ms,cur);
   renderReputacao(ss,ms,cur);
   renderSectionInsights(ss,ms,cur,prev);
@@ -1336,6 +1390,110 @@ function renderClips(ss,ms,cur){
      falling.length?`${falling.map(d=>d.n).join(', ')} com cobertura caindo MoM`:null].filter(Boolean),
     [noSol.length?`Avaliar vinculação de solução para ${noSol.slice(0,2).map(d=>d.n).join(', ')}`:null,
      lowCov.length?`Revisar estratégia de CLIPs para aumentar cobertura PDP em ${lowCov[0]?.n}`:null].filter(Boolean)
+  );
+}
+
+/* ═══ METAS ═══ */
+function renderMetas(ss,ms,cur){
+  // Filtra sellers com meta definida
+  const metaSellers=Object.entries(METAS).map(([cid,m])=>{
+    const s=S.find(x=>x.cid===+cid);
+    // GMV real = soma dos meses selecionados
+    const gmvReal=s?ms.reduce((a,mi)=>a+(s.gmv[mi]||0),0):null;
+    // Meta = soma dos meses selecionados (índice 0=Jan...11=Dez)
+    const metaFin=ms.reduce((a,mi)=>a+(m.fin[mi]||0),0);
+    const metaDes=ms.reduce((a,mi)=>a+(m.des[mi]||0),0);
+    const pctFin=gmvReal&&metaFin?+(gmvReal/metaFin*100).toFixed(1):null;
+    const pctDes=gmvReal&&metaDes?+(gmvReal/metaDes*100).toFixed(1):null;
+    return{cid:+cid,nm:m.nm,s,gmvReal,metaFin,metaDes,pctFin,pctDes};
+  }).filter(d=>FS.sellers.size===0||!d.s||(d.s&&FS.sellers.has(d.s.n)));
+
+  // Cor por % atingimento
+  function atCol(pct){
+    if(pct==null)return GR;
+    if(pct>=100)return G;
+    if(pct>=80) return Y;
+    return R;
+  }
+  function atBadge(pctFin,pctDes){
+    if(pctDes>=100)return`<span class="badge badge-des">🏆 Desafio</span>`;
+    if(pctFin>=100) return`<span class="badge bg">✅ Meta</span>`;
+    if(pctFin>=80)  return`<span class="badge by">⚠ Atenção</span>`;
+    return`<span class="badge br">🔴 Abaixo</span>`;
+  }
+
+  // ── KPIs de portfolio ──
+  const totReal=metaSellers.reduce((a,d)=>a+(d.gmvReal||0),0);
+  const totFin =metaSellers.reduce((a,d)=>a+d.metaFin,0);
+  const totDes =metaSellers.reduce((a,d)=>a+d.metaDes,0);
+  const pFin=totFin?+(totReal/totFin*100).toFixed(1):null;
+  const pDes=totDes?+(totReal/totDes*100).toFixed(1):null;
+  const onMeta=metaSellers.filter(d=>d.pctFin>=100).length;
+  const onDes=metaSellers.filter(d=>d.pctDes>=100).length;
+  document.getElementById('metaKpis').innerHTML=[
+    {lbl:'GMV Real (período)',val:fmtM(totReal),sub:'sellers com meta',cls:'b'},
+    {lbl:'% vs Meta Financeira',val:pFin!=null?pFin+'%':'—',sub:fmtM(totFin)+' de objetivo',cls:pFin>=100?'g':pFin>=80?'y':'r'},
+    {lbl:'% vs Meta Desafio',  val:pDes!=null?pDes+'%':'—',sub:fmtM(totDes)+' de desafio',  cls:pDes>=100?'g':pDes>=80?'y':'r'},
+    {lbl:'Sellers na Meta',val:onMeta+' / '+metaSellers.length,sub:onDes+' bateram o Desafio',cls:onMeta>=metaSellers.length?'g':'y'},
+  ].map(k=>`<div class="kpi ${k.cls}"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div><div class="kpi-note">${k.sub}</div></div>`).join('');
+
+  // ── Tabela ──
+  const tbl=document.getElementById('tblMetas');
+  tbl.innerHTML=`<thead><tr>
+    <th>Seller</th><th>GMV Real</th>
+    <th>Meta Fin.</th><th>% Fin.</th><th>Barra</th>
+    <th>Meta Desafio</th><th>% Desafio</th>
+    <th>Status</th>
+  </tr></thead>`;
+  const tb=document.createElement('tbody');
+  [...metaSellers].sort((a,b)=>(b.pctFin||0)-(a.pctFin||0)).forEach(d=>{
+    const cfin=atCol(d.pctFin),cdes=atCol(d.pctDes);
+    const barW=Math.min(d.pctFin||0,100);
+    const barOver=d.pctFin>100?`<span style="font-size:9px;color:var(--g);font-weight:700"> +${(d.pctFin-100).toFixed(1)}pp</span>`:'';
+    tb.innerHTML+=`<tr>
+      <td><strong>${d.nm}</strong>${!d.s?'<span style="font-size:9px;color:#aaa;margin-left:4px">(sem GMV)</span>':''}</td>
+      <td><strong>${fmtM(d.gmvReal)}</strong></td>
+      <td style="color:#aaa">${fmtM(d.metaFin)}</td>
+      <td><span class="ating-num" style="color:${cfin}">${d.pctFin!=null?d.pctFin+'%':'—'}</span>${barOver}</td>
+      <td style="min-width:80px">
+        <div class="meta-bar-wrap"><div class="meta-bar-fill" style="width:${barW}%;background:${cfin}"></div></div>
+      </td>
+      <td style="color:#aaa">${fmtM(d.metaDes)}</td>
+      <td><span class="ating-num" style="color:${cdes}">${d.pctDes!=null?d.pctDes+'%':'—'}</span></td>
+      <td>${atBadge(d.pctFin||0,d.pctDes||0)}</td>
+    </tr>`;
+  });
+  tbl.appendChild(tb);
+
+  // ── Gráfico barras agrupadas ──
+  const labels=metaSellers.map(d=>d.nm);
+  charts['cMetas']?.destroy();
+  charts['cMetas']=new Chart(document.getElementById('cMetas'),{type:'bar',data:{
+    labels,
+    datasets:[
+      {label:'GMV Real',   data:metaSellers.map(d=>Math.round((d.gmvReal||0)/1000)),backgroundColor:metaSellers.map(d=>atCol(d.pctFin)+'cc'),borderRadius:4},
+      {label:'Meta Fin.',  data:metaSellers.map(d=>Math.round(d.metaFin/1000)),     backgroundColor:'transparent',borderColor:'#555',borderWidth:2,borderDash:[5,4],type:'bar',borderRadius:4},
+      {label:'Meta Desafio',data:metaSellers.map(d=>Math.round(d.metaDes/1000)),    backgroundColor:'transparent',borderColor:'#9B59B6',borderWidth:1.5,borderDash:[3,3],type:'bar',borderRadius:4},
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtM(c.raw*1000)}`}}
+    },
+    scales:{x:{grid:{display:false},ticks:{color:'#555',font:{size:9}}},
+      y:{ticks:{callback:v=>fmtMInt(v*1000),color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}}}
+  }});
+
+  // ── Insights ──
+  const abaixo=metaSellers.filter(d=>d.pctFin!=null&&d.pctFin<80);
+  const naFin =metaSellers.filter(d=>d.pctFin>=100);
+  const naDes =metaSellers.filter(d=>d.pctDes>=100);
+  si('si-metas',
+    [naDes.length?`${naDes.map(d=>d.nm).join(', ')} bateram a Meta Desafio 🏆`:null,
+     naFin.length?`${naFin.map(d=>d.nm).join(', ')} atingiram a Meta Financeira`:null].filter(Boolean),
+    [abaixo.length?`${abaixo.map(d=>d.nm).join(', ')} abaixo de 80% da Meta Financeira`:null,
+     pFin<100?`Carteira a ${pFin}% da Meta Financeira — gap de ${fmtM(totFin-totReal)}`:null].filter(Boolean),
+    [abaixo.length?`Reforçar ações comerciais em ${abaixo[0]?.nm} para recuperar gap de meta`:null,
+     `Avaliar aceleração de ${naDes.length?naDes[0].nm:'sellers acima da meta'} para superar Meta Desafio`].filter(Boolean)
   );
 }
 
