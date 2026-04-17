@@ -371,6 +371,7 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
     <div class="snb" onclick="gotoSec('s2-trend')">Evolução BPC</div>
     <div class="snb" onclick="gotoSec('s2-ranking')">Ranking</div>
     <div class="snb" onclick="gotoSec('s2-heatmap')">Mapa de Calor</div>
+    <div class="snb" onclick="gotoSec('s2-visits')">Expensive / Cheaper</div>
     <div class="snb" onclick="gotoSec('s2-ofensores')">Itens Ofensores</div>
   </div>
   <div class="page">
@@ -428,6 +429,31 @@ footer{text-align:center;font-size:10px;color:#bbb;padding:12px 0 20px;}
           <div class="card-title">% GMV em Risco por Mês</div>
           <div class="card-sub">% do GMV com BPC abaixo de 80%</div>
           <div style="height:220px"><canvas id="cGmvRisk"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visitas Expensive vs Cheaper -->
+    <div class="section" id="s2-visits">
+      <div class="sec-hd" style="flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="sec-title">Visitas — Expensive vs Cheaper por Seller</div>
+          <div class="sec-sub">Fonte: LK_COMP_FAVORABILITIES · BOX_ALL_ABC · Granularidade diária agregada</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="chart-mode-btn on" id="btnVisExp" onclick="setVisitMode('exp')">🔴 Expensive</button>
+          <button class="chart-mode-btn" id="btnVisCheap" onclick="setVisitMode('cheap')">🟢 Cheaper</button>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="card" style="overflow-x:auto">
+          <div class="card-title" id="visitTableTitle">Visitas Expensive por Seller e Mês</div>
+          <div class="card-sub" id="visitTableSub">Meli mais caro que concorrente · vermelho = pior</div>
+          <table class="tbl" id="tblVisits" style="margin-top:10px"></table>
+        </div>
+        <div class="card">
+          <div class="card-title" id="visitChartTitle">% Expensive por Seller — Abr 2026</div>
+          <div style="height:280px"><canvas id="cVisits"></canvas></div>
         </div>
       </div>
     </div>
@@ -2381,6 +2407,119 @@ function renderReputacao(ss, ms, cur){
   );
 }
 
+/* ═══ VISITS EXPENSIVE / CHEAPER ═══ */
+// Fonte: LK_COMP_FAVORABILITIES · BOX_ALL_ABC · DAY granularity · Jan-Abr 2026
+// [Jan, Fev, Mar, Abr] · match=total visitas matcheadas · exp=Meli mais caro · cheap=Meli competitivo
+const VISITS_DATA=[
+  {cid:213658244,  n:'EMCOMPRE',    match:[26480622,33022743,25071549,9756933],  exp:[9879672,14356517,10379581,4643990],  pctExp:[37.3,43.5,41.4,47.6]},
+  {cid:622556468,  n:'LUCAS-HOME',  match:[11511346,11223526,13206001,7379182],  exp:[2402141,3148846,4873094,2378045],    pctExp:[20.9,28.1,36.9,32.2]},
+  {cid:1017072559, n:'ZEBRANDS',    match:[5419288, 5066932, 5995307, 3205899],  exp:[3068366,2637988,2185030,1641727],    pctExp:[56.6,52.1,36.4,51.2]},
+  {cid:361841053,  n:'CAMA INHOUSE',match:[11361383,9640948, 10244959,5018026],  exp:[2041867,2138450,2085462,1081664],    pctExp:[18.0,22.2,20.4,21.6]},
+  {cid:1176215393, n:'ZIDI',        match:[4292404, 5974563, 4253513, 4237301],  exp:[128090, 47958,  160027, 56562],      pctExp:[3.0, 0.8, 3.8, 1.3]},
+  {cid:1223087781, n:'KAZA MIX',    match:[3718817, 4987920, 8907980, 4764183],  exp:[1252104,1070047,1950894,1122402],    pctExp:[33.7,21.5,21.9,23.6]},
+  {cid:1479401290, n:'BFCASAFULL',  match:[2700235, 2164878, 2965112, 1824258],  exp:[829802, 652151, 634800, 379163],     pctExp:[30.7,30.1,21.4,20.8]},
+  {cid:2287647005, n:'SONNUS',      match:[3067,    7061,    14472,   9100],      exp:[22,     336,    41,     0],          pctExp:[0.7, 4.8, 0.3, 0.0]},
+  {cid:130704477,  n:'ECONEWCOLCH', match:[34905,   5113,    6473,    null],      exp:[150,    377,    120,    null],        pctExp:[0.4, 7.4, 1.9, null]},
+  {cid:656012015,  n:'ZIDI MOVEIS', match:[723024,  591171,  1424949, 1096707],   exp:[134012, 159684, 508587, 420227],     pctExp:[18.5,27.0,35.7,38.3]},
+  {cid:3032269507, n:'BEGTRAV.',    match:[14608,   45690,   76000,   26334],     exp:[5406,   27350,  26082,  13386],      pctExp:[37.0,59.9,34.3,50.8]},
+  {cid:1746119501, n:'LUCAS NE',    match:[null,    260,     560715,  662656],    exp:[null,   177,    20327,  84673],      pctExp:[null,68.3,3.6,12.8]},
+];
+
+var visitMode='exp'; // 'exp' = expensive | 'cheap' = cheaper
+
+function setVisitMode(mode){
+  visitMode=mode;
+  document.getElementById('btnVisExp').classList.toggle('on',mode==='exp');
+  document.getElementById('btnVisCheap').classList.toggle('on',mode==='cheap');
+  renderVisits();
+}
+
+function renderVisits(){
+  const isExp=visitMode==='exp';
+  const mn=['Jan','Fev','Mar','Abr'];
+  const colBad=R,colGood=G;
+
+  // Labels e cores
+  document.getElementById('visitTableTitle').textContent=
+    isExp?'Visitas Expensive por Seller e Mês':'Visitas Cheaper por Seller e Mês';
+  document.getElementById('visitTableSub').textContent=
+    isExp?'Meli mais caro que concorrente — maior = pior para BPC'
+         :'Meli competitivo/mais barato — maior = melhor para BPC';
+  document.getElementById('visitChartTitle').textContent=
+    isExp?'% Expensive por Seller — últimos 4 meses'
+         :'% Cheaper por Seller — últimos 4 meses';
+
+  // Ordena por % do último mês disponível
+  const sorted=[...VISITS_DATA].sort((a,b)=>{
+    const pa=isExp?(a.pctExp[3]||a.pctExp[2]||0):(100-(a.pctExp[3]||a.pctExp[2]||100));
+    const pb=isExp?(b.pctExp[3]||b.pctExp[2]||0):(100-(b.pctExp[3]||b.pctExp[2]||100));
+    return isExp?pb-pa:pa-pb; // expensive: desc (pior primeiro) | cheaper: asc (pior primeiro)
+  });
+
+  // ── Tabela ──
+  const tbl=document.getElementById('tblVisits');
+  tbl.innerHTML=`<thead><tr>
+    <th>Seller</th>
+    ${mn.map(m=>`<th>${m} Visitas</th><th>${m} %</th>`).join('')}
+    <th>Tendência</th>
+  </tr></thead>`;
+  const tb=document.createElement('tbody');
+  sorted.forEach(d=>{
+    const vals=isExp?d.exp:d.match.map((m,i)=>m&&d.exp[i]!=null?m-d.exp[i]:null);
+    const pcts=isExp?d.pctExp:d.pctExp.map(p=>p!=null?+(100-p).toFixed(1):null);
+    // Tendência: Abr vs Jan
+    const pa=pcts[3],pj=pcts[0];
+    const trend=pa!=null&&pj!=null?+(pa-pj).toFixed(1):null;
+    const trendHtml=trend==null?'—':
+      (isExp?trend>0:'▼'+Math.abs(trend)+'pp pior') ||
+      (isExp?
+        `<span style="color:${trend>0?R:G};font-weight:700">${trend>0?'▲':''+'▼'+Math.abs(trend)+'pp'}</span>`:
+        `<span style="color:${trend>0?G:R};font-weight:700">${trend>0?'▲':''+'▼'+Math.abs(trend)+'pp'}</span>`
+      );
+    const trendColor=isExp?(trend>0?R:G):(trend>0?G:R);
+    const trendStr=trend==null?'—':`<span style="color:${trendColor};font-weight:700">${trend>0?'▲ +':'▼ '}${Math.abs(trend)}pp</span>`;
+    let row=`<tr><td><strong>${d.n}</strong></td>`;
+    for(let i=0;i<4;i++){
+      const v=vals[i],p=pcts[i];
+      const col=p==null?'#ccc':isExp?(p>40?R:p>25?Y:G):(p>75?G:p>50?Y:R);
+      row+=`<td style="font-size:11px;color:#555">${v!=null?Math.round(v/1000)+'K':'—'}</td>`;
+      row+=`<td><span style="font-weight:800;color:${col}">${p!=null?p+'%':'—'}</span></td>`;
+    }
+    row+=`<td>${trendStr}</td></tr>`;
+    tb.innerHTML+=row;
+  });
+  tbl.appendChild(tb);
+
+  // ── Gráfico ──
+  const chartData=sorted.map(d=>{
+    const p=isExp?d.pctExp[3]||d.pctExp[2]:100-(d.pctExp[3]||d.pctExp[2]||100);
+    return{n:d.n,pct:p||0};
+  });
+  const barColors=chartData.map(d=>{
+    const p=d.pct;
+    if(isExp)return p>40?R+'cc':p>25?Y+'cc':G+'cc';
+    return p>75?G+'cc':p>50?Y+'cc':R+'cc';
+  });
+  charts['cVisits']?.destroy();
+  charts['cVisits']=new Chart(document.getElementById('cVisits'),{type:'bar',data:{
+    labels:chartData.map(d=>d.n),
+    datasets:[{
+      label:isExp?'% Expensive':'% Cheaper',
+      data:chartData.map(d=>d.pct),
+      backgroundColor:barColors,
+      borderRadius:5,
+    }]
+  },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw}%`}}
+    },
+    scales:{
+      x:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#aaa',font:{size:9}},grid:{color:'#F5F5F5'}},
+      y:{grid:{display:false},ticks:{color:'#555',font:{size:10,weight:'600'}}}
+    }
+  }});
+}
+
 /* ═══ PAYMENT ═══ */
 function renderPayment(ss){
   const selCids=new Set(ss.map(s=>s.cid));
@@ -2695,6 +2834,7 @@ function renderTab2(){
   document.getElementById('t2kd2').innerHTML=`<span style="font-size:10px;color:var(--gr)">${bArr.length?(onMeta/bArr.length*100).toFixed(0):'0'}% na meta</span>`;
 
   genInsights(ss,ms,cur,prev,'insList2');
+  renderVisits();
 
   // Matriz BPC × GMV (mesma função do Tab 1, agora exclusiva do Tab 2)
   renderMatrix(ss,cur);
