@@ -2496,18 +2496,32 @@ function renderItems(){
     .filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi])
     .sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
 
-  // Aumento de Preço: preço real OU ticket médio (GMV/Units) subiu
-  const p=[...filtered].filter(it=>{
-    const pc=it.p[cur],pf=it.p[firstMi];
-    if(pc&&pf&&(pc-pf)/pf>0.005)return true;
-    const tc=it.gmv[cur]&&it.units[cur]?it.gmv[cur]/it.units[cur]:null;
-    const tf=it.gmv[firstMi]&&it.units[firstMi]?it.gmv[firstMi]/it.units[firstMi]:null;
-    return tc&&tf&&(tc-tf)/tf>0.05;
-  }).sort((a,b)=>{
-    const vb=(b.p[cur]&&b.p[firstMi])?(b.p[cur]-b.p[firstMi])/b.p[firstMi]:0;
-    const va=(a.p[cur]&&a.p[firstMi])?(a.p[cur]-a.p[firstMi])/a.p[firstMi]:0;
-    return vb-va;
-  });
+  // Aumento de Preço: compara sempre Jan(p[0]) vs Abr(p[3]) — referência fixa, ignora filtro de mês
+  // para evitar comparar o mesmo mês vs ele mesmo quando período = 1 mês
+  const _pRef=function(it){
+    // 1. Preço real: Abr > Jan
+    const pA=it.p[3],pJ=it.p[0];
+    if(pA&&pJ&&pA>pJ)return{type:'preco',delta:(pA-pJ)/pJ,ref:pJ,val:pA};
+    // 2. Ticket médio (GMV/Units): Abr > Jan (>2%)
+    const tA=it.gmv[3]&&it.units[3]?it.gmv[3]/it.units[3]:null;
+    const tJ=it.gmv[0]&&it.units[0]?it.gmv[0]/it.units[0]:null;
+    if(tA&&tJ&&tA>tJ*1.02)return{type:'ticket',delta:(tA-tJ)/tJ,ref:tJ,val:tA};
+    return null;
+  };
+  var pWithDelta=filtered.map(it=>({it,ref:_pRef(it)})).filter(x=>x.ref!==null);
+  // Fallback: se < 5 resultados, adiciona top itens por preço atual (premium review)
+  var p;
+  if(pWithDelta.length>=3){
+    p=pWithDelta.sort((a,b)=>b.ref.delta-a.ref.delta).map(x=>x.it);
+  } else {
+    // Mostra itens com maior preço atual (Abr ou último disponível)
+    p=[...filtered].filter(it=>{const v=it.p[3]||it.p[2]||it.p[1]||it.p[0];return v!=null;})
+      .sort((a,b)=>{
+        const pa=a.p[3]||a.p[2]||a.p[1]||a.p[0]||0;
+        const pb=b.p[3]||b.p[2]||b.p[1]||b.p[0]||0;
+        return pb-pa;
+      });
+  }
 
   // VC Negativa (ordenado por GMV)
   const vc=[...filtered].filter(it=>it.vc_neg).sort((a,b)=>itmGmv(b)-itmGmv(a));
@@ -2960,17 +2974,9 @@ function renderItemsEco(ss,ms,cur,prev){
   const firstMi=ms[0];
   const top2=[...filtered].filter(it=>itmGmv(it)>0).sort((a,b)=>sv(b)-sv(a));
   const q2=[...filtered].filter(it=>it.gmv[cur]!=null&&it.gmv[firstMi]!=null&&it.gmv[cur]<it.gmv[firstMi]).sort((a,b)=>(a.gmv[cur]/a.gmv[firstMi])-(b.gmv[cur]/b.gmv[firstMi]));
-  const p2=[...filtered].filter(it=>{
-    const pc=it.p[cur],pf=it.p[firstMi];
-    if(pc&&pf&&(pc-pf)/pf>0.005)return true;
-    const tc=it.gmv[cur]&&it.units[cur]?it.gmv[cur]/it.units[cur]:null;
-    const tf=it.gmv[firstMi]&&it.units[firstMi]?it.gmv[firstMi]/it.units[firstMi]:null;
-    return tc&&tf&&(tc-tf)/tf>0.05;
-  }).sort((a,b)=>{
-    const vb=(b.p[cur]&&b.p[firstMi])?(b.p[cur]-b.p[firstMi])/b.p[firstMi]:0;
-    const va=(a.p[cur]&&a.p[firstMi])?(a.p[cur]-a.p[firstMi])/a.p[firstMi]:0;
-    return vb-va;
-  });
+  const _pr2=it=>{const pA=it.p[3],pJ=it.p[0];if(pA&&pJ&&pA>pJ)return(pA-pJ)/pJ;const tA=it.gmv[3]&&it.units[3]?it.gmv[3]/it.units[3]:null,tJ=it.gmv[0]&&it.units[0]?it.gmv[0]/it.units[0]:null;if(tA&&tJ&&tA>tJ*1.02)return(tA-tJ)/tJ;return null;};
+  const _pw2=filtered.map(it=>({it,d:_pr2(it)})).filter(x=>x.d!==null);
+  const p2=_pw2.length>=3?_pw2.sort((a,b)=>b.d-a.d).map(x=>x.it):[...filtered].filter(it=>it.p[3]||it.p[2]||it.p[1]||it.p[0]).sort((a,b)=>(b.p[3]||b.p[2]||b.p[1]||b.p[0]||0)-(a.p[3]||a.p[2]||a.p[1]||a.p[0]||0));
   const vc2=[...filtered].filter(it=>it.vc_neg).sort((a,b)=>itmGmv(b)-itmGmv(a));
   document.getElementById('tTop2').innerHTML=mk2(top2);
   document.getElementById('tQueda2').innerHTML=mk2(q2);
